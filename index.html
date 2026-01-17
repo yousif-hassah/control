@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>control | Operational Authority</title>
+    <meta
+      name="description"
+      content="Mission-critical infrastructure for the 0.1%. Absolute precision. Zero trust. Infinite scale."
+    />
+
+    <!-- Critical CSS Baseline -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Font: Inter for minimalist look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      media="print"
+      onload="this.media = 'all'"
+    />
+  </head>
+  <body>
+    <div id="loader" class="loader-container">
+      <div class="spinner"></div>
+      <p>Initializing Systems...</p>
+    </div>
+
+    <div class="mesh-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+
+    <nav id="navbar">
+      <div class="logo">
+        CONTROL<span
+          style="font-size: 0.8rem; vertical-align: super; margin-left: 2px"
+          >™</span
+        >
+      </div>
+      <div class="nav-links" id="navLinks">
+        <a href="#directives">Directives</a>
+        <a href="#deployments">Deployments</a>
+        <a href="#audit">Audit</a>
+      </div>
+      <button
+        class="menu-toggle"
+        id="menuToggle"
+        aria-label="Toggle Navigation"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+
+    <main>
+      <!-- Scroll Sequence Storytelling -->
+      <section id="scroll-sequence" class="scroll-sequence-container">
+        <canvas id="sequence-canvas"></canvas>
+
+        <!-- Story Overlays -->
+        <div class="story-overlay" data-frame="start">
+          <h1 class="story-title">WpDev. Pure Sound.</h1>
+        </div>
+
+        <div class="story-overlay" data-frame="middle-left">
+          <h2 class="story-sub">Precision Engineering.</h2>
+        </div>
+
+        <div class="story-overlay" data-frame="middle-right">
+          <h2 class="story-sub">Titanium Drivers.</h2>
+        </div>
+
+        <div class="story-overlay" data-frame="end">
+          <h2 class="story-title">Hear Everything.</h2>
+        </div>
+      </section>
+
+      <section id="directives" class="section container">
+        <div class="section-title reveal">
+          <div class="label">Core Directives</div>
+          <h2>Deterministic Infrastructure</h2>
+        </div>
+        <div class="grid-base">
+          <article class="card reveal">
+            <div class="feature-icon"><i class="fas fa-microchip"></i></div>
+            <h3>01. Execution</h3>
+            <p style="color: var(--text-dim)">
+              Proprietary high-performance processing layer optimized for
+              sub-millisecond latency and continuous operational flow.
+            </p>
+          </article>
+          <article class="card reveal">
+            <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
+            <h3>02. Hardening</h3>
+            <p style="color: var(--text-dim)">
+              Immutable zero-trust architecture with end-to-end hardware-level
+              encryption. Security is not a feature; it is the default.
+            </p>
+          </article>
+          <article class="card reveal">
+            <div class="feature-icon"><i class="fas fa-network-wired"></i></div>
+            <h3>03. Topology</h3>
+            <p style="color: var(--text-dim)">
+              Global infrastructure mesh across multiple high-availability
+              zones. Redundant operational integrity by design.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="deployments" class="section container">
+        <div class="section-title reveal">
+          <div class="label">Deployments</div>
+          <h2>Mission-level impact</h2>
+        </div>
+        <div class="projects-grid">
+          <article class="project-card reveal">
+            <div class="project-media">
+              <img
+                src="hero_abstract_tech_1768647970919.png"
+                alt="Aether project visualization"
+                loading="lazy"
+              />
+            </div>
+            <div class="project-info">
+              <h3>Project: Aether</h3>
+              <p>
+                Autonomous network optimization for global financial data
+                streams. Deterministic latency reduction at scale.
+              </p>
+              <a href="#" class="project-link"
+                >Access Specs <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </article>
+          <article class="project-card reveal">
+            <div class="project-media">
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background: #272829;
+                "
+              >
+                <i
+                  class="fas fa-play-circle"
+                  style="font-size: 4rem; color: var(--primary)"
+                ></i>
+              </div>
+            </div>
+            <div class="project-info">
+              <h3>Sector: Defense</h3>
+              <p>
+                Encrypted communication mesh for distributed field operations.
+                Signal integrity in contested environments.
+              </p>
+              <a href="#" class="project-link"
+                >Audit Flow <i class="fas fa-arrow-right"></i
+              ></a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="audit" class="section container">
+        <div class="section-title reveal">
+          <div class="label">Audit Logs</div>
+          <h2>Validated Authority</h2>
+        </div>
+        <div class="audit-grid">
+          <article class="audit-card reveal">
+            <p class="audit-text">
+              "control has fundamentally redefined our security posture. We now
+              execute with total visibility across all endpoints."
+            </p>
+            <div class="audit-user">
+              <div class="char-container">
+                <img
+                  src="avatar_woman_ceo_1768647987969.png"
+                  class="char-anim"
+                  alt="Elena Vance"
+                  loading="lazy"
+                />
+              </div>
+              <div>
+                <div
+                  style="
+                    font-weight: 800;
+                    font-size: 0.8rem;
+                    letter-spacing: 1px;
+                  "
+                >
+                  ELENA VANCE
+                </div>
+                <div
+                  style="
+                    color: var(--primary);
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                  "
+                >
+                  CHIEF SYSTEMS ARCHITECT
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="audit-card reveal">
+            <p class="audit-text">
+              "The precision is unmatched. It’s the first infrastructure layer
+              that actually feels deterministic under heavy load."
+            </p>
+            <div class="audit-user">
+              <div class="char-container">
+                <img
+                  src="avatar_man_engineer_1768648004394.png"
+                  class="char-anim"
+                  alt="Julian Thorne"
+                  loading="lazy"
+                />
+              </div>
+              <div>
+                <div
+                  style="
+                    font-weight: 800;
+                    font-size: 0.8rem;
+                    letter-spacing: 1px;
+                  "
+                >
+                  JULIAN THORNE
+                </div>
+                <div
+                  style="
+                    color: var(--primary);
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                  "
+                >
+                  LEAD DEVOPS ENGINEER
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="audit-card reveal">
+            <p class="audit-text">
+              "Minimalist. Zero friction. Moving our scale operations to control
+              was the most logical decision of the year."
+            </p>
+            <div class="audit-user">
+              <div class="char-container">
+                <div
+                  style="
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--bg-deep);
+                  "
+                >
+                  <i
+                    class="fas fa-user-ninja"
+                    style="color: var(--primary); font-size: 1.5rem"
+                  ></i>
+                </div>
+              </div>
+              <div>
+                <div
+                  style="
+                    font-weight: 800;
+                    font-size: 0.8rem;
+                    letter-spacing: 1px;
+                  "
+                >
+                  MARCUS K.
+                </div>
+                <div
+                  style="
+                    color: var(--primary);
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                  "
+                >
+                  INFRASTRUCTURE OPS
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="audit-card reveal">
+            <p class="audit-text">
+              "Deployment speed increased by 400% while maintaining absolute
+              compliance across every global node."
+            </p>
+            <div class="audit-user">
+              <div class="char-container">
+                <div
+                  style="
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--bg-deep);
+                  "
+                >
+                  <i
+                    class="fas fa-user-astronaut"
+                    style="color: var(--primary); font-size: 1.5rem"
+                  ></i>
+                </div>
+              </div>
+              <div>
+                <div
+                  style="
+                    font-weight: 800;
+                    font-size: 0.8rem;
+                    letter-spacing: 1px;
+                  "
+                >
+                  SARAH JENKINS
+                </div>
+                <div
+                  style="
+                    color: var(--primary);
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                  "
+                >
+                  GLOBAL SECURITY LEAD
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container">
+      <div class="logo" style="margin-bottom: 2rem">
+        CONTROL<span
+          style="font-size: 0.8rem; vertical-align: super; margin-left: 2px"
+          >™</span
+        >
+      </div>
+      <p
+        style="
+          color: var(--text-dim);
+          font-size: 0.7rem;
+          letter-spacing: 2px;
+          margin-top: 2rem;
+        "
+      >
+        &copy; 2026 CONTROL SYSTEMS. OPERATIONS INTEGRITY SECURED.
+      </p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
