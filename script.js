@@ -80,13 +80,15 @@ const initScrollSequence = async () => {
   const preloadImages = () => {
     return new Promise((resolve) => {
       let loadedCount = 0;
+      const onSettle = () => {
+        loadedCount++;
+        if (loadedCount === frameCount) resolve();
+      };
       for (let i = 1; i <= frameCount; i++) {
         const img = new Image();
         img.src = `vedio.c/${i.toString().padStart(5, "0")}.jpg`;
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount === frameCount) resolve();
-        };
+        img.onload = onSettle;
+        img.onerror = onSettle; // Don't freeze if a frame is missing
         images.push(img);
       }
     });
