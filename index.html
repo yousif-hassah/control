@@ -25,15 +25,18 @@
     <!-- Icons -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      media="print"
-      onload="this.media = 'all'"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     />
   </head>
   <body>
+    <!-- Interactive Layers -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <div id="scroll-progress"></div>
+
     <div id="loader" class="loader-container">
       <div class="spinner"></div>
-      <p>Initializing Systems...</p>
+      <p class="loader-text">Initializing Systems...</p>
     </div>
 
     <div class="mesh-bg">
@@ -52,6 +55,7 @@
         <a href="#directives">Directives</a>
         <a href="#deployments">Deployments</a>
         <a href="#audit">Audit</a>
+        <a href="#audit" class="nav-cta">Initiate Scan</a>
       </div>
       <button
         class="menu-toggle"
@@ -127,8 +131,7 @@
         </div>
         <div class="projects-grid">
 
-
-
+          <!-- Project 1 -->
           <article class="project-card reveal">
             <div class="project-media">
               <img
@@ -136,9 +139,10 @@
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project:store shope</h3>
+              <h3>Project: store shope</h3>
               <p>
                 A professional and elegantly designed online store that provides a seamless user experience.
               </p>
@@ -148,19 +152,20 @@
             </div>
           </article>
 
-
-        <article class="project-card reveal">
+          <!-- Project 2 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image2.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project:store LADY.</h3>
+              <h3>Project: store LADY.</h3>
               <p>
-                A professional and elegantly designed online store The pinnacle of Iraqi luxury fashion. Tailored for those who lead
+                A professional and elegantly designed online store. The pinnacle of Iraqi luxury fashion. Tailored for those who lead.
               </p>
               <a href="https://lady-xi.vercel.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
@@ -168,15 +173,15 @@
             </div>
           </article>
 
-
-
-         <article class="project-card reveal">
+          <!-- Project 3 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image3.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
               <h3>Project: Menu Coffee.</h3>
@@ -189,14 +194,15 @@
             </div>
           </article>
 
-
-         <article class="project-card reveal">
+          <!-- Project 4 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image4.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
               <h3>Project: DELISH Restaurant.</h3>
@@ -207,23 +213,22 @@
                 >Access Specs <i class="fas fa-arrow-right"></i
               ></a>
             </div>
-          </article>  
+          </article>
 
-
-
-
-        <article class="project-card reveal">
+          <!-- Project 5 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image5.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
               <h3>Project: Lens & Light.</h3>
               <p>
-             A website for a photographer to showcase their work, and photo sessions can be booked through the site.
+                A website for a photographer to showcase their work, and photo sessions can be booked through the site.
               </p>
               <a href="https://photographer-delta-smoky.vercel.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
@@ -231,22 +236,20 @@
             </div>
           </article>
 
-
-
-
-
-                  <article class="project-card reveal">
+          <!-- Project 6 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image6.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project: planet .</h3>
+              <h3>Project: planet.</h3>
               <p>
-             (Editorial Photography Portfolio) is called the PLANET digital and analog archive in Baghdad. The site showcases a unique visual philosophy that combines sharpness and artistic chiaroscuro.e.
+                (Editorial Photography Portfolio) is called the PLANET digital and analog archive in Baghdad. The site showcases a unique visual philosophy.
               </p>
               <a href="https://planet-907018080690.europe-west1.run.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
@@ -254,22 +257,20 @@
             </div>
           </article>
 
-
-
-
-
-           <article class="project-card reveal">
+          <!-- Project 7 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image7.png"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project: DIJLAH .</h3>
+              <h3>Project: DIJLAH.</h3>
               <p>
-             A multidisciplinary design studio based in Baghdad. We partner with visionaries, startups, and established enterprises to elevate the visual landscape of Iraq through thoughtful brand strategies, typography, and motion design.
+                A multidisciplinary design studio based in Baghdad. We partner with visionaries to elevate the visual landscape of Iraq.
               </p>
               <a href="https://graphicdijlah.vercel.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
@@ -277,23 +278,20 @@
             </div>
           </article>
 
-
-
-
-
-          
-           <article class="project-card reveal">
+          <!-- Project 8 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image8.jpg"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project: Setton .</h3>
+              <h3>Project: Setton.</h3>
               <p>
-             The platform is a space where we open doors for content creators to contribute to creating a conscious, educated, and reconciled childhood with its Iraqi and human identity.
+                The platform is a space where we open doors for content creators to contribute to creating a conscious childhood.
               </p>
               <a href="https://setton-3-three.vercel.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
@@ -301,30 +299,28 @@
             </div>
           </article>
 
-
-
-                  <article class="project-card reveal">
+          <!-- Project 9 -->
+          <article class="project-card reveal">
             <div class="project-media">
               <img
                 src="img.projects/image9.jpg"
                 alt="Aether project visualization"
                 loading="lazy"
               />
+              <div class="project-view-icon"><i class="fas fa-external-link-alt"></i></div>
             </div>
             <div class="project-info">
-              <h3>Project: TWENTY ONE .</h3>
+              <h3>Project: TWENTY ONE.</h3>
               <p>
-             The website's coffee shop features a menu, account creation, and the ability to place orders through the site. The website also includes a store for selling products (management system).
+                The website features a coffee shop menu, account creation, and online ordering, alongside a product store.
               </p>
               <a href="https://web21-cafe.vercel.app/" class="project-link"
                 >Access Specs <i class="fas fa-arrow-right"></i
               ></a>
             </div>
           </article>
-<!-- 
----------------------------------------------------------- -->
 
-
+          <!-- Defense Sector Project -->
           <article class="project-card reveal">
             <div class="project-media">
               <div
@@ -333,20 +329,20 @@
                   display: flex;
                   align-items: center;
                   justify-content: center;
-                  background: #272829;
+                  background: #111;
                 "
               >
                 <i
                   class="fas fa-play-circle"
-                  style="font-size: 4rem; color: var(--primary)"
+                  style="font-size: 3.5rem; color: var(--primary)"
                 ></i>
               </div>
+              <div class="project-view-icon"><i class="fas fa-shield-halved"></i></div>
             </div>
             <div class="project-info">
               <h3>Sector: Defense</h3>
               <p>
-                Encrypted communication mesh for distributed field operations.
-                Signal integrity in contested environments.
+                Encrypted communication mesh for distributed field operations. Signal integrity in contested environments.
               </p>
               <a href="#" class="project-link"
                 >Audit Flow <i class="fas fa-arrow-right"></i
@@ -362,152 +358,173 @@
           <h2>Validated Authority</h2>
         </div>
         <div class="audit-grid">
-
-
-          <!-- ------------------------ -->
+          <!-- Testimonial 1 -->
           <article class="audit-card reveal">
-            <p class="audit-text">
-              "control has fundamentally redefined our security posture. We now
-              execute with total visibility across all endpoints."
-            </p>
+            <div>
+              <div class="audit-stars">
+                <!-- <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i> -->
+              </div>
+              <p class="audit-text">
+                "Our core system completely improved the performance. Now we run the hardest code with total stability and secure databases everywhere"
+              </p>
+            </div>
             <div class="audit-user">
               <div class="char-container">
                 <img
-                  src="avatar_woman_ceo_1768647987969.png"
+                  src="mk.jpg"
                   class="char-anim"
                   alt="Elena Vance"
                   loading="lazy"
                 />
               </div>
               <div>
-                <div
-                  style="
-                    font-weight: 800;
-                    font-size: 0.8rem;
-                    letter-spacing: 1px;
-                  "
-                >
-                  ELENA VANCE
+                <div style="font-weight: 800; font-size: 0.8rem; letter-spacing: 1px;">
+                  Mustafa ahmed 
                 </div>
-                <div
-                  style="
-                    color: var(--primary);
-                    font-size: 0.7rem;
-                    font-weight: 700;
-                  "
-                >
-                  CHIEF SYSTEMS ARCHITECT
+                <div style="color: var(--primary); font-size: 0.7rem; font-weight: 700;">
+                  Backend developer 
                 </div>
               </div>
             </div>
-
           </article>
-<!-- --------------------------------------- -->
+
+          <!-- Testimonial 2 -->
           <article class="audit-card reveal">
-            <p class="audit-text">
-              "The precision is unmatched. It’s the first infrastructure layer
-              that actually feels deterministic under heavy load."
-            </p>
+            <div>
+              <div class="audit-stars">
+                <!-- <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i> -->
+              </div>
+              <p class="audit-text">
+                "The connection between the website design and the backend is very smooth. The website is fast and works perfectly even under heavy load."
+              </p>
+            </div>
             <div class="audit-user">
               <div class="char-container">
                 <img
-                  src="avatar_man_engineer_1768648004394.png"
+                  src="yousif.jpg"
                   class="char-anim"
                   alt="Julian Thorne"
                   loading="lazy"
                 />
               </div>
               <div>
-                <div
-                  style="
-                    font-weight: 800;
-                    font-size: 0.8rem;
-                    letter-spacing: 1px;
-                  "
-                >
-                  JULIAN THORNE
+                <div style="font-weight: 800; font-size: 0.8rem; letter-spacing: 1px;">
+                  Yousif hassan 
                 </div>
-                <div
-                  style="
-                    color: var(--primary);
-                    font-size: 0.7rem;
-                    font-weight: 700;
-                  "
-                >
-                  LEAD DEVOPS ENGINEER
+                <div style="color: var(--primary); font-size: 0.7rem; font-weight: 700;">
+                  Full-stack developer 
                 </div>
               </div>
             </div>
           </article>
-<!-- ------------------------------------------- -->
 
+          <!-- Testimonial 3 -->
           <article class="audit-card reveal">
-            <p class="audit-text">
-              "Deployment speed increased by 400% while maintaining absolute
-              compliance across every global node."
-            </p>
+            <div>
+              <div class="audit-stars">
+                <!-- <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i> -->
+              </div>
+              <p class="audit-text">
+                "User experience became 4 times better, while keeping a clean and modern design across all screens"
+              </p>
+            </div>
             <div class="audit-user">
               <div class="char-container">
-                <div
-                  style="
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--bg-deep);
-                  "
-                >
-                  <i
-                    class="fas fa-user-astronaut"
-                    style="color: var(--primary); font-size: 1.5rem"
-                  ></i>
-                </div>
+                <img
+                  src="ali.jpg"
+                  class="char-anim"
+                  alt="Sarah Jenkins"
+                  loading="lazy"
+                />
               </div>
               <div>
-                <div
-                  style="
-                    font-weight: 800;
-                    font-size: 0.8rem;
-                    letter-spacing: 1px;
-                  "
-                >
-                  SARAH JENKINS
+                <div style="font-weight: 800; font-size: 0.8rem; letter-spacing: 1px;">
+                  Ali yousif 
                 </div>
-                <div
-                  style="
-                    color: var(--primary);
-                    font-size: 0.7rem;
-                    font-weight: 700;
-                  "
-                >
-                  GLOBAL SECURITY LEAD
+                <div style="color: var(--primary); font-size: 0.7rem; font-weight: 700;">
+                  Designer
                 </div>
               </div>
             </div>
           </article>
 
-
+                    <!-- Testimonial 4 -->
+          <article class="audit-card reveal">
+            <div>
+              <div class="audit-stars">
+                <!-- <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i> -->
+              </div>
+              <p class="audit-text">
+                "The app became 4 times faster with smooth animations, while keeping the fast performance and easy navigation on all phones"
+              </p>
+            </div>
+            <div class="audit-user">
+              <div class="char-container">
+                <img
+                  src="azher.jpg"
+                  class="char-anim"
+                  alt="Sarah Jenkins"
+                  loading="lazy"
+                />
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 0.8rem; letter-spacing: 1px;">
+                  Azher 
+                </div>
+                <div style="color: var(--primary); font-size: 0.7rem; font-weight: 700;">
+                  App developer 
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
     </main>
 
-    <footer class="container">
-      <div class="logo" style="margin-bottom: 2rem">
-        CONTROL<span
-          style="font-size: 0.8rem; vertical-align: super; margin-left: 2px"
-          >™</span
-        >
+    <footer>
+      <div class="container footer-inner">
+        <div class="logo">
+          CONTROL<span style="font-size: 0.8rem; vertical-align: super; margin-left: 2px">™</span>
+        </div>
+        
+        <a href="#directives" class="footer-cta">
+          Initiate Audit Protocol <i class="fas fa-arrow-right"></i>
+        </a>
+
+        <div class="footer-social">
+          <a href="https://www.instagram.com/controltxt.c/" aria-label="INSTAGRAM"><i class="fab fa-instagram"></i></a>
+          <!-- <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a> -->
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="controltxt.11@gmail.com" aria-label="EMAIL"><i class="fas fa-envelope"></i></a>
+        </div>
+
+        <div class="footer-divider"></div>
+
+        <div class="footer-bottom">
+          <p>CONTROL SYSTEMS. OPERATIONS INTEGRITY SECURED.</p>
+          <!-- <div class="footer-bottom-links">
+            <a href="#">Security Specs</a>
+            <a href="#">Privacy Protocol</a>
+            <a href="#">API Documentation</a>
+          </div> -->
+        </div>
       </div>
-      <p
-        style="
-          color: var(--text-dim);
-          font-size: 0.7rem;
-          letter-spacing: 2px;
-          margin-top: 2rem;
-        "
-      >
-        &copy; 2026 CONTROL SYSTEMS. OPERATIONS INTEGRITY SECURED.
-      </p>
     </footer>
 
     <script src="script.js"></script>
