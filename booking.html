@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a Meeting — CONTROL</title>
+  <meta name="description" content="Schedule a consultation with the CONTROL Systems team." />
+  <link rel="shortcut icon" href="88.jpg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --gray-1: #1d1d1f;
+      --gray-2: #6e6e73;
+      --gray-3: #aeaeb2;
+      --gray-4: #d1d1d6;
+      --gray-5: #f2f2f7;
+      --border: rgba(0,0,0,0.08);
+      --green: #34c759;
+      --radius: 20px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--gray-1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+    }
+    .nav-logo { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; text-decoration: none; color: var(--gray-1); }
+    .nav-back { font-size: 0.875rem; font-weight: 500; color: #555; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+    .nav-back:hover { opacity: 0.65; }
+
+    /* ── Layout ── */
+    .main {
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    .page-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.03em; text-align: center; margin-bottom: 0.4rem; }
+    .page-sub   { font-size: 0.95rem; color: var(--gray-2); text-align: center; margin-bottom: 2rem; }
+
+    /* ── Calendar Card ── */
+    .card {
+      width: 100%; max-width: 780px;
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.07), 0 0 0 1px var(--border);
+      overflow: hidden;
+    }
+
+    .cal-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 1.4rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cal-month { font-size: 1.15rem; font-weight: 600; }
+
+    .cal-nav { display: flex; gap: 8px; }
+    .cal-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--gray-5);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; color: var(--gray-1);
+      transition: background 0.15s;
+    }
+    .cal-btn:hover { background: var(--gray-4); }
+    .cal-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Grid ── */
+    .cal-body { padding: 1rem 2rem 1.75rem; }
+
+    .weekdays {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 0.4rem;
+    }
+    .wd {
+      text-align: center;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--gray-3); text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.5rem 0;
+    }
+
+    .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+    .day {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; font-weight: 400;
+      color: var(--gray-1);
+      cursor: pointer;
+      transition: background 0.14s;
+      min-width: 38px; min-height: 38px;
+      position: relative;
+    }
+    .day:hover:not(.empty):not(.past):not(.selected) { background: var(--gray-5); }
+    .day.empty { cursor: default; }
+    .day.past   { color: var(--gray-4); cursor: not-allowed; }
+    .day.today  { color: #1d1d1f; font-weight: 700; }
+    .day.today::after {
+      content: '';
+      position: absolute; bottom: 4px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 4px; border-radius: 50%;
+      background: #1d1d1f;
+    }
+    .day.selected {
+      background: #1d1d1f;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .day.selected::after { display: none; }
+
+    /* ── Booking Form ── */
+    .booking-panel {
+      display: none;
+      padding: 0 2rem 2rem;
+      border-top: 1px solid var(--border);
+      animation: fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .booking-panel.open { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-head {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 1.4rem 0 1.2rem;
+    }
+    .panel-date { font-size: 1rem; font-weight: 600; }
+    .panel-close {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gray-5); border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; color: var(--gray-2);
+      transition: background 0.15s;
+    }
+    .panel-close:hover { background: var(--gray-4); }
+
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--gray-2); text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: var(--gray-5);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--gray-1);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: #aaa; background: #fff; }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      background: #1d1d1f;
+      color: #fff;
+      border: none; border-radius: 14px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:hover { opacity: 0.85; }
+
+    /* ── Success ── */
+    .success {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      animation: fadeUp 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .success.open { display: block; }
+    .success-icon {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--green);
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; color: #fff;
+    }
+    .success h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .success p  { font-size: 0.9rem; color: var(--gray-2); line-height: 1.6; }
+
+    /* ── Responsive ── */
+    @media (max-width: 560px) {
+      .cal-header { padding: 1.1rem 1.25rem; }
+      .cal-body   { padding: 0.75rem 1.25rem 1.25rem; }
+      .booking-panel { padding: 0 1.25rem 1.5rem; }
+      .success { padding: 2rem 1.25rem; }
+      .day { font-size: 0.78rem; min-width: 32px; min-height: 32px; }
+      .fields-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">CONTROL™</a>
+    <a href="index.html" class="nav-back"><i class="fas fa-chevron-left"></i> Back</a>
+  </nav>
+
+  <main class="main">
+    <h1 class="page-title">Book a Consultation</h1>
+    <p class="page-sub">Pick a date — we'll confirm and reach out within 2 hours.</p>
+
+    <div class="card">
+
+      <!-- Calendar Header -->
+      <div class="cal-header">
+        <div class="cal-month" id="calMonth">Loading...</div>
+        <div class="cal-nav">
+          <button class="cal-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+          <button class="cal-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="cal-body">
+        <div class="weekdays">
+          <div class="wd">Sun</div><div class="wd">Mon</div><div class="wd">Tue</div>
+          <div class="wd">Wed</div><div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div>
+        </div>
+        <div class="days" id="calDays"></div>
+      </div>
+
+      <!-- Booking Form (appears on day click) -->
+      <div class="booking-panel" id="bookingPanel">
+        <div class="panel-head">
+          <div class="panel-date" id="panelDate">—</div>
+          <button class="panel-close" id="panelClose"><i class="fas fa-xmark"></i></button>
+        </div>
+
+        <div class="fields-row">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="f_name" placeholder="e.g. Ahmed Ali" />
+          </div>
+          <div class="field">
+            <label>Phone / WhatsApp</label>
+            <input type="tel" id="f_phone" placeholder="+964 ..." dir="ltr" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Email <span style="font-size:0.75rem; color: var(--label); font-weight:400; text-transform:none;">(optional)</span></label>
+          <input type="email" id="f_email" placeholder="your@email.com" dir="ltr" />
+        </div>
+
+        <div class="field">
+          <label>Project Name</label>
+          <input type="text" id="f_project" placeholder="e.g. Online Store for Clothing" />
+        </div>
+
+        <div class="fields-row">
+          <div class="field">
+            <label>Expected Budget</label>
+            <input type="text" id="f_budget" placeholder="Your budget..." />
+          </div>
+          <div class="field">
+            <label>Service Type</label>
+            <select id="f_service" onchange="handleServiceChange(this)">
+              <option value="">— Select —</option>
+              <option>Website / Landing Page</option>
+              <option>Mobile Application</option>
+              <option>E-commerce Store</option>
+              <option>System / Platform</option>
+              <option value="Other">Other</option>
+            </select>
+            <input
+              type="text"
+              id="f_service_other"
+              placeholder="Please specify the service..."
+              style="display:none; margin-top: 10px;"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="f_notes" placeholder="Any extra details about your idea or special requirements..."></textarea>
+        </div>
+
+        <button class="submit-btn" id="submitBtn">Confirm Booking Request</button>
+      </div>
+
+      <!-- Success State -->
+      <div class="success" id="successPanel">
+        <div class="success-icon"><i class="fas fa-check"></i></div>
+        <h2>Booking Received!</h2>
+        <p>We'll confirm your selected date and reach out via<br>WhatsApp or email within 2 hours.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const MAX_MONTHS_AHEAD = 3;
+
+    let cur = new Date();
+    cur.setDate(1);
+    let selectedDay = null;
+
+    const calMonth    = document.getElementById('calMonth');
+    const calDays     = document.getElementById('calDays');
+    const prevBtn     = document.getElementById('prevBtn');
+    const nextBtn     = document.getElementById('nextBtn');
+    const panel       = document.getElementById('bookingPanel');
+    const panelDate   = document.getElementById('panelDate');
+    const panelClose  = document.getElementById('panelClose');
+    const successPanel= document.getElementById('successPanel');
+    const submitBtn   = document.getElementById('submitBtn');
+
+    function today0() {
+      const t = new Date();
+      return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    }
+
+    function maxDate() {
+      const t = new Date();
+      return new Date(t.getFullYear(), t.getMonth() + MAX_MONTHS_AHEAD + 1, 0); // last day of 3rd month
+    }
+
+    function renderCalendar() {
+      const y = cur.getFullYear(), m = cur.getMonth();
+      calMonth.textContent = `${MONTHS[m]} ${y}`;
+
+      const now   = today0();
+      const first = new Date(y, m, 1).getDay();
+      const total = new Date(y, m + 1, 0).getDate();
+      const max   = maxDate();
+
+      // Nav button states
+      const prevMonth = new Date(y, m - 1, 1);
+      const nextMonth = new Date(y, m + 1, 1);
+      prevBtn.disabled = prevMonth < new Date(now.getFullYear(), now.getMonth(), 1);
+      nextBtn.disabled = nextMonth > new Date(now.getFullYear(), now.getMonth() + MAX_MONTHS_AHEAD, 1);
+
+      calDays.innerHTML = '';
+
+      // Leading empty cells
+      for (let i = 0; i < first; i++) {
+        const el = document.createElement('div');
+        el.className = 'day empty';
+        calDays.appendChild(el);
+      }
+
+      // Day cells
+      for (let d = 1; d <= total; d++) {
+        const el = document.createElement('div');
+        el.className = 'day';
+        el.textContent = d;
+
+        const date = new Date(y, m, d);
+        const isToday   = date.toDateString() === now.toDateString();
+        const isPast    = date < now;
+        const isWeekend = date.getDay() === 5 || date.getDay() === 6; // Fri & Sat off
+        const isBeyond  = date > max;
+
+        if (isToday) el.classList.add('today');
+
+        if (isPast || isWeekend || isBeyond) {
+          el.classList.add('past');
+        } else {
+          if (selectedDay && selectedDay.d === d && selectedDay.m === m && selectedDay.y === y) {
+            el.classList.add('selected');
+          }
+          el.addEventListener('click', () => selectDay(d, m, y, DAYS[date.getDay()]));
+        }
+
+        calDays.appendChild(el);
+      }
+    }
+
+    function selectDay(d, m, y, dayName) {
+      selectedDay = { d, m, y };
+      successPanel.classList.remove('open');
+      clearForm();
+      panelDate.textContent = `${dayName}, ${MONTHS[m]} ${d}, ${y}`;
+      panel.classList.add('open');
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+      renderCalendar(); // refresh selection highlight
+    }
+
+    function clearForm() {
+      ['f_name','f_phone','f_email','f_project','f_notes','f_budget'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+      document.getElementById('f_service').selectedIndex = 0;
+      const otherEl = document.getElementById('f_service_other');
+      otherEl.value = '';
+      otherEl.style.display = 'none';
+    }
+
+    function handleServiceChange(sel) {
+      const otherEl = document.getElementById('f_service_other');
+      if (sel.value === 'Other') {
+        otherEl.style.display = 'block';
+        otherEl.focus();
+      } else {
+        otherEl.style.display = 'none';
+        otherEl.value = '';
+      }
+    }
+
+    panelClose.addEventListener('click', () => {
+      panel.classList.remove('open');
+      selectedDay = null;
+      renderCalendar();
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      const name    = document.getElementById('f_name').value.trim();
+      const phone   = document.getElementById('f_phone').value.trim();
+      const email   = document.getElementById('f_email').value.trim();
+      const project = document.getElementById('f_project').value.trim();
+      const budget  = document.getElementById('f_budget').value.trim();
+      const notes   = document.getElementById('f_notes').value.trim();
+      const rawService = document.getElementById('f_service').value;
+      const service = rawService === 'Other'
+        ? (document.getElementById('f_service_other').value.trim() || 'Other')
+        : rawService;
+
+      if (rawService === 'Other' && !document.getElementById('f_service_other').value.trim()) {
+        alert('Please specify the service type.');
+        document.getElementById('f_service_other').focus();
+        return;
+      }
+
+      if (!name || !phone) {
+        alert('Please enter your name and phone number.');
+        return;
+      }
+
+      const dateStr = selectedDay 
+        ? `${selectedDay.y}-${String(selectedDay.m + 1).padStart(2, '0')}-${String(selectedDay.d).padStart(2, '0')}` 
+        : new Date().toISOString().split('T')[0];
+
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Submitting Request...';
+
+      try {
+        const response = await fetch('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, email, project, budget, service, notes, date: dateStr })
+        });
+
+        if (!response.ok) throw new Error('Submission failed');
+
+        panel.classList.remove('open');
+        successPanel.classList.add('open');
+        successPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch (err) {
+        alert('Failed to submit booking. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    prevBtn.addEventListener('click', () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); });
+    nextBtn.addEventListener('click', () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); });
+
+    renderCalendar();
+  </script>
+
+</body>
+</html>

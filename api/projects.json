@@ -1,0 +1,82 @@
+[
+  {
+    "id": "PROJ-1768647000001",
+    "title": "store shope",
+    "description": "A professional and elegantly designed online store that provides a seamless user experience.",
+    "imageUrl": "img.projects/image1.png",
+    "linkUrl": "https://shirt2026.vercel.app/",
+    "createdAt": 1768647000001
+  },
+  {
+    "id": "PROJ-1768647000002",
+    "title": "store LADY.",
+    "description": "A professional and elegantly designed online store. The pinnacle of Iraqi luxury fashion. Tailored for those who lead.",
+    "imageUrl": "img.projects/image2.png",
+    "linkUrl": "https://lady-xi.vercel.app/",
+    "createdAt": 1768647000002
+  },
+  {
+    "id": "PROJ-1768647000003",
+    "title": "Menu Coffee.",
+    "description": "A simple and elegant menu.",
+    "imageUrl": "img.projects/image3.png",
+    "linkUrl": "https://menu-plus.vercel.app/",
+    "createdAt": 1768647000003
+  },
+  {
+    "id": "PROJ-1768647000004",
+    "title": "DELISH Restaurant.",
+    "description": "The restaurant's website is user-friendly, with an integrated on-site booking system, menu, and services.",
+    "imageUrl": "img.projects/image4.png",
+    "linkUrl": "https://cursormh1947.vercel.app/website/",
+    "createdAt": 1768647000004
+  },
+  {
+    "id": "PROJ-1768647000005",
+    "title": "Lens & Light.",
+    "description": "A website for a photographer to showcase their work, and photo sessions can be booked through the site.",
+    "imageUrl": "img.projects/image5.png",
+    "linkUrl": "https://photographer-delta-smoky.vercel.app/",
+    "createdAt": 1768647000005
+  },
+  {
+    "id": "PROJ-1768647000006",
+    "title": "planet.",
+    "description": "(Editorial Photography Portfolio) is called the PLANET digital and analog archive in Baghdad. The site showcases a unique visual philosophy.",
+    "imageUrl": "img.projects/image6.png",
+    "linkUrl": "https://planet-907018080690.europe-west1.run.app/",
+    "createdAt": 1768647000006
+  },
+  {
+    "id": "PROJ-1768647000007",
+    "title": "DIJLAH.",
+    "description": "A multidisciplinary design studio based in Baghdad. We partner with visionaries to elevate the visual landscape of Iraq.",
+    "imageUrl": "img.projects/image7.png",
+    "linkUrl": "https://graphicdijlah.vercel.app/",
+    "createdAt": 1768647000007
+  },
+  {
+    "id": "PROJ-1768647000008",
+    "title": "Setton.",
+    "description": "The platform is a space where we open doors for content creators to contribute to creating a conscious childhood.",
+    "imageUrl": "img.projects/image8.jpg",
+    "linkUrl": "https://setton-3-three.vercel.app/",
+    "createdAt": 1768647000008
+  },
+  {
+    "id": "PROJ-1768647000009",
+    "title": "TWENTY ONE.",
+    "description": "The website features a coffee shop menu, account creation, and online ordering, alongside a product store.",
+    "imageUrl": "img.projects/image9.jpg",
+    "linkUrl": "https://web21-cafe.vercel.app/",
+    "createdAt": 1768647000009
+  },
+  {
+    "id": "PROJ-1768647000010",
+    "title": "Defense Sector",
+    "description": "Encrypted communication mesh for distributed field operations. Signal integrity in contested environments.",
+    "imageUrl": "",
+    "linkUrl": "#",
+    "createdAt": 1768647000010
+  }
+]

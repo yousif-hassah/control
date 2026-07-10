@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTROL — Admin Dashboard</title>
+  <link rel="shortcut icon" href="88.jpg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050505;
+      --surface: #0f0f11;
+      --surface-elevated: #18181c;
+      --primary: #f5f5f7;
+      --secondary: #86868b;
+      --accent: #2997ff;
+      --success: #30d158;
+      --error: #ff453a;
+      --warning: #ffd60a;
+      --border: rgba(255, 255, 255, 0.08);
+      --radius: 16px;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* --- Custom Scrollbar --- */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+    /* --- Passcode Overlay --- */
+    #lockScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 1000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.5s ease, visibility 0.5s;
+    }
+    #lockScreen.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+    .lock-card {
+      width: 100%; max-width: 380px; padding: 3rem 2rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 24px; text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .lock-logo {
+      font-size: 1.5rem; font-weight: 800; letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .lock-sub {
+      color: var(--secondary); font-size: 0.82rem;
+      margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .lock-input {
+      width: 100%; padding: 14px; background: #000;
+      border: 1px solid var(--border); border-radius: 12px;
+      color: #fff; font-size: 1.1rem; text-align: center; letter-spacing: 0.3em;
+      outline: none; margin-bottom: 1.5rem; transition: var(--transition);
+    }
+    .lock-input:focus { border-color: var(--secondary); }
+    .lock-btn {
+      width: 100%; padding: 14px; background: var(--primary);
+      color: #000; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: var(--transition);
+    }
+    .lock-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .lock-error {
+      color: var(--error); font-size: 0.85rem; margin-top: 1rem; display: none;
+    }
+
+    /* --- Navbar --- */
+    .header {
+      background: rgba(15, 15, 17, 0.7);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      padding: 0.8rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em;
+      text-decoration: none; color: var(--primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo span { font-size: 0.72rem; color: var(--secondary); font-weight: 400; border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; }
+    
+    .nav-tabs { display: flex; gap: 6px; background: #000; padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+    .tab-btn {
+      background: none; border: none; color: var(--secondary);
+      padding: 8px 16px; font-size: 0.875rem; font-weight: 500;
+      border-radius: 8px; cursor: pointer; transition: var(--transition);
+    }
+    .tab-btn.active {
+      background: var(--surface-elevated); color: var(--primary);
+    }
+    .tab-btn:hover:not(.active) { color: var(--primary); }
+
+    .logout-btn {
+      background: none; border: 1px solid var(--border); color: var(--secondary);
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: var(--transition);
+    }
+    .logout-btn:hover { color: var(--error); border-color: rgba(255, 69, 58, 0.3); background: rgba(255, 69, 58, 0.05); }
+
+    /* --- Main Layout --- */
+    .container {
+      max-width: 1200px; width: 100%; margin: 0 auto; padding: 2rem;
+      flex: 1; display: flex; flex-direction: column;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Stats Section --- */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+    }
+    .stat-label { font-size: 0.75rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .stat-val { font-size: 2rem; font-weight: 700; }
+
+    /* --- Cards Grid --- */
+    .bookings-list { display: flex; flex-direction: column; gap: 1rem; }
+    
+    .booking-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      display: grid; grid-template-columns: 1fr auto; gap: 1.5rem;
+      transition: var(--transition);
+    }
+    .booking-card:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+    .booking-details h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; }
+    .booking-details h3 span.badge {
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 20px; letter-spacing: 0.03em;
+    }
+    .badge.pending { background: rgba(255, 214, 10, 0.12); color: var(--warning); border: 1px solid rgba(255, 214, 10, 0.2); }
+    .badge.confirmed { background: rgba(48, 209, 88, 0.12); color: var(--success); border: 1px solid rgba(48, 209, 88, 0.2); }
+    .badge.declined { background: rgba(255, 69, 58, 0.12); color: var(--error); border: 1px solid rgba(255, 69, 58, 0.2); }
+
+    .booking-meta { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--secondary); }
+    .booking-meta span { display: flex; align-items: center; gap: 6px; }
+    .booking-meta i { font-size: 0.9rem; }
+
+    .booking-project {
+      font-size: 0.92rem; line-height: 1.5; color: var(--primary);
+      padding: 10px 12px; background: rgba(255,255,255,0.02);
+      border-radius: 8px; border-left: 2px solid var(--secondary);
+      margin-bottom: 0.8rem;
+    }
+
+    .booking-notes { font-size: 0.85rem; color: var(--secondary); line-height: 1.5; margin-bottom: 0.5rem; }
+
+    .booking-actions { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 10px; }
+    
+    .btn-group { display: flex; gap: 8px; }
+    
+    .btn {
+      padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px; transition: var(--transition);
+    }
+    
+    .btn-success { background: var(--success); color: #000; }
+    .btn-success:hover { opacity: 0.9; }
+    
+    .btn-outline { border-color: var(--border); color: var(--primary); background: none; }
+    .btn-outline:hover { background: var(--surface-elevated); border-color: rgba(255,255,255,0.2); }
+    
+    .btn-danger { background: none; border-color: rgba(255, 69, 58, 0.2); color: var(--error); }
+    .btn-danger:hover { background: rgba(255, 69, 58, 0.1); border-color: var(--error); }
+
+    .btn-whatsapp { background: #25d366; color: #000; font-size: 0.85rem; padding: 10px 16px; border-radius: 10px; }
+    .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* --- Projects Management Panel --- */
+    .proj-manage-layout {
+      display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .proj-manage-layout { grid-template-columns: 1fr; }
+      .booking-card { grid-template-columns: 1fr; }
+      .booking-actions { align-items: flex-start; }
+    }
+
+    .form-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.75rem; position: sticky; top: 80px;
+    }
+    .form-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+    
+    .field { margin-bottom: 1.2rem; }
+    .field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%; background: #000; border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 14px; color: #fff; font-size: 0.9rem;
+      font-family: inherit; outline: none; transition: var(--transition);
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--secondary); }
+    .field textarea { resize: vertical; min-height: 90px; }
+
+    .submit-project-btn {
+      width: 100%; padding: 12px; background: var(--primary); color: #000;
+      border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+    }
+    .submit-project-btn:hover { opacity: 0.9; }
+
+    /* --- Admin Projects Grid --- */
+    .admin-proj-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .admin-proj-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.2rem;
+      display: flex; gap: 1.2rem; align-items: center; transition: var(--transition);
+    }
+    .admin-proj-card:hover { border-color: rgba(255,255,255,0.12); }
+    
+    .admin-proj-img {
+      width: 64px; height: 64px; border-radius: 10px; object-fit: cover;
+      background: var(--surface-elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .admin-proj-info { flex: 1; }
+    .admin-proj-info h4 { font-size: 1rem; font-weight: 700; margin-bottom: 3px; }
+    .admin-proj-info p { font-size: 0.8rem; color: var(--secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .loading-state {
+      text-align: center; padding: 4rem; color: var(--secondary);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Lock Screen Overlay -->
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-logo">CONTROL™</div>
+      <div class="lock-sub">Operations Integrity Panel</div>
+      <input type="password" id="passcodeInput" class="lock-input" placeholder="••••" maxlength="12" />
+      <button id="unlockBtn" class="lock-btn">Unlock Console</button>
+      <div id="lockError" class="lock-error">Passcode rejected. Access denied.</div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="header">
+    <a href="index.html" class="logo">
+      CONTROL <span>ADMIN</span>
+    </a>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('bookings')"><i class="fas fa-calendar-check"></i> Bookings</button>
+      <button class="tab-btn" onclick="switchTab('projects')"><i class="fas fa-folder-open"></i> Projects</button>
+    </div>
+
+    <button class="logout-btn" onclick="logout()" title="Lock Console">
+      <i class="fas fa-lock"></i>
+    </button>
+  </header>
+
+  <!-- Dashboard Container -->
+  <main class="container">
+    
+    <!-- === Bookings Tab === -->
+    <section id="bookingsTab" class="tab-content active">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Bookings</div>
+          <div class="stat-val" id="statTotal">—</div>
+        </div>
+        <div class="stat-card" style="border-left: 3px solid var(--warning);">
+          <div class="stat-label">Pending Reviews</div>
+          <div class="stat-val" id="statPending">—</div>
+        </div>
+        <div class="stat-card" style="border-left: 3px solid var(--success);">
+          <div class="stat-label">Confirmed Sessions</div>
+          <div class="stat-val" id="statConfirmed">—</div>
+        </div>
+      </div>
+
+      <div class="bookings-list" id="bookingsList">
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <p>Connecting to secure bookings vault...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- === Projects Tab === -->
+    <section id="projectsTab" class="tab-content">
+      <div class="proj-manage-layout">
+        
+        <!-- Add Project Form -->
+        <div class="form-panel">
+          <div class="form-title"><i class="fas fa-plus-circle"></i> Deploy New Specs</div>
+          
+          <div class="field">
+            <label>Project Title / Client</label>
+            <input type="text" id="p_title" placeholder="e.g. store LADY." />
+          </div>
+          <div class="field">
+            <label>Description (Arabic/English)</label>
+            <textarea id="p_description" placeholder="Describe the project specs, tech stack and target impact..."></textarea>
+          </div>
+          <div class="field">
+            <label>Preview Link URL</label>
+            <input type="url" id="p_link" placeholder="e.g. https://lady-xi.vercel.app/" />
+          </div>
+          <div class="field">
+            <label>Project Photo</label>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <input type="file" id="p_file" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
+              <button type="button" onclick="document.getElementById('p_file').click()" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 12px; font-weight: 500;">
+                <i class="fas fa-cloud-upload-alt"></i> Choose Image File
+              </button>
+              <div id="file_preview_container" style="display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 10px;">
+                <img id="file_preview" style="width: 48px; height: 48px; border-radius: 8px; object-fit: cover;" />
+                <div style="flex: 1; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--secondary);" id="file_name_display"></div>
+                <button type="button" onclick="clearSelectedFile()" class="btn btn-danger" style="padding: 6px 10px; font-size: 0.75rem;">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <input type="hidden" id="p_image" />
+            </div>
+          </div>
+
+          <button onclick="submitProject()" class="submit-project-btn">Publish to Website & AI</button>
+        </div>
+
+        <!-- Current Projects List -->
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem;"><i class="fas fa-server"></i> Active Mesh Nodes (<span id="projCount">0</span>)</h3>
+          <div class="admin-proj-grid" id="adminProjGrid">
+            <div class="loading-state">
+              <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+              <p>Retrieving active deployments...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let currentPasscode = localStorage.getItem('ctrl_admin_passcode') || '';
+
+    // Initialize Auth
+    window.addEventListener('DOMContentLoaded', () => {
+      if (currentPasscode) {
+        verifyPasscode(currentPasscode, true);
+      } else {
+        document.getElementById('lockScreen').classList.remove('hidden');
+        document.getElementById('passcodeInput').focus();
+      }
+    });
+
+    // Passcode Lock / Unlock Logic
+    document.getElementById('unlockBtn').addEventListener('click', () => {
+      const code = document.getElementById('passcodeInput').value.trim();
+      verifyPasscode(code);
+    });
+
+    document.getElementById('passcodeInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const code = document.getElementById('passcodeInput').value.trim();
+        verifyPasscode(code);
+      }
+    });
+
+    async function verifyPasscode(code, silent = false) {
+      const errorMsg = document.getElementById('lockError');
+      errorMsg.style.display = 'none';
+
+      try {
+        // Retrieve bookings using the passcode as authentication
+        const response = await fetch(`/api/bookings?passcode=${code}`);
+        
+        if (response.ok) {
+          currentPasscode = code;
+          localStorage.setItem('ctrl_admin_passcode', code);
+          document.getElementById('lockScreen').classList.add('hidden');
+          loadAllData();
+        } else {
+          throw new Error('Authentication failed');
+        }
+      } catch (err) {
+        localStorage.removeItem('ctrl_admin_passcode');
+        if (!silent) {
+          errorMsg.style.display = 'block';
+          document.getElementById('passcodeInput').value = '';
+          document.getElementById('passcodeInput').focus();
+        } else {
+          document.getElementById('lockScreen').classList.remove('hidden');
+          document.getElementById('passcodeInput').focus();
+        }
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('ctrl_admin_passcode');
+      currentPasscode = '';
+      document.getElementById('lockScreen').classList.remove('hidden');
+      document.getElementById('passcodeInput').value = '';
+      document.getElementById('passcodeInput').focus();
+    }
+
+    // Switch Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      const clickedBtn = [...document.querySelectorAll('.tab-btn')].find(btn => btn.innerText.toLowerCase().includes(tabId));
+      if (clickedBtn) clickedBtn.classList.add('active');
+
+      const targetContent = document.getElementById(tabId + 'Tab');
+      if (targetContent) targetContent.classList.add('active');
+    }
+
+    // Load Data
+    function loadAllData() {
+      loadBookings();
+      loadProjects();
+    }
+
+    // Fetch and render Bookings
+    async function loadBookings() {
+      const list = document.getElementById('bookingsList');
+      try {
+        const res = await fetch(`/api/bookings?passcode=${currentPasscode}`);
+        if (!res.ok) throw new Error('Failed to retrieve bookings');
+        const bookings = await res.json();
+
+        // Render Stats
+        document.getElementById('statTotal').innerText = bookings.length;
+        document.getElementById('statPending').innerText = bookings.filter(b => b.status === 'pending').length;
+        document.getElementById('statConfirmed').innerText = bookings.filter(b => b.status === 'confirmed').length;
+
+        if (bookings.length === 0) {
+          list.innerHTML = `
+            <div style="text-align: center; padding: 4rem; color: var(--secondary);">
+              <i class="fas fa-calendar-times" style="font-size: 2.5rem; margin-bottom: 1rem; color: #222;"></i>
+              <p>No booking requests found in the vault.</p>
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = '';
+        bookings.forEach(b => {
+          const card = document.createElement('div');
+          card.className = 'booking-card';
+
+          const formattedDate = new Date(b.createdAt).toLocaleString('en-US', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          // Clean phone number for WhatsApp wa.me link
+          const waPhone = b.phone.replace(/[^0-9]/g, '');
+          const waLink = `https://wa.me/${waPhone.startsWith('0') ? '964' + waPhone.substring(1) : waPhone}?text=${encodeURIComponent(`أهلاً بك عيني ${b.name}، تواصلنا معك من فريق CONTROL بخصوص طلب الاستشارة للمشروع...`)}`;
+
+          card.innerHTML = `
+            <div class="booking-details">
+              <h3>
+                ${b.name}
+                <span class="badge ${b.status}">${b.status}</span>
+              </h3>
+              <div class="booking-meta">
+                <span><i class="fas fa-calendar-day"></i> Date: <strong>${b.date}</strong></span>
+                <span><i class="fas fa-tag"></i> Service: <strong>${b.service}</strong></span>
+                <span><i class="fas fa-wallet"></i> Budget: <strong>${b.budget || '—'}</strong></span>
+                <span><i class="fas fa-clock"></i> Recd: <strong>${formattedDate}</strong></span>
+                ${b.email ? `<span><i class="fas fa-envelope"></i> <a href="mailto:${b.email}" style="color:var(--accent);text-decoration:none;">${b.email}</a></span>` : ''}
+              </div>
+              ${b.project ? `<div class="booking-project"><strong>Project details:</strong> ${b.project}</div>` : ''}
+              ${b.notes ? `<div class="booking-notes"><strong>Notes:</strong> ${b.notes}</div>` : ''}
+            </div>
+            <div class="booking-actions">
+              <a href="${waLink}" target="_blank" class="btn btn-whatsapp">
+                <i class="fab fa-whatsapp"></i> Chat WhatsApp
+              </a>
+              ${b.email ? `<a href="mailto:${b.email}" class="btn btn-outline" style="font-size:0.82rem;"><i class="fas fa-envelope"></i> Email</a>` : ''}
+              <div class="btn-group">
+                ${b.status !== 'confirmed' ? `<button onclick="updateBookingStatus('${b.id}', 'confirmed')" class="btn btn-success" title="Confirm booking"><i class="fas fa-check"></i></button>` : ''}
+                ${b.status !== 'declined' ? `<button onclick="updateBookingStatus('${b.id}', 'declined')" class="btn btn-outline" title="Decline booking"><i class="fas fa-xmark"></i></button>` : ''}
+                <button onclick="deleteBooking('${b.id}')" class="btn btn-danger" title="Delete record"><i class="far fa-trash-can"></i></button>
+              </div>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        list.innerHTML = `<div style="text-align:center;color:var(--error);padding:2rem;">Error: ${err.message}</div>`;
+      }
+    }
+
+    // Update Booking Status
+    async function updateBookingStatus(id, status) {
+      try {
+        const res = await fetch('/api/bookings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Passcode': currentPasscode
+          },
+          body: JSON.stringify({ id, status })
+        });
+        if (!res.ok) throw new Error('Status update failed');
+        loadBookings();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Delete Booking
+    async function deleteBooking(id) {
+      if (!confirm('Are you sure you want to permanently delete this booking record?')) return;
+      try {
+        const res = await fetch('/api/bookings', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Passcode': currentPasscode
+          },
+          body: JSON.stringify({ id })
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        loadBookings();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Fetch and render Projects
+    async function loadProjects() {
+      const grid = document.getElementById('adminProjGrid');
+      try {
+        const res = await fetch('/api/projects');
+        if (!res.ok) throw new Error('Failed to load projects');
+        const projects = await res.json();
+
+        document.getElementById('projCount').innerText = projects.length;
+
+        if (projects.length === 0) {
+          grid.innerHTML = `<p style="text-align: center; color: var(--secondary); padding: 2rem;">No deployments found.</p>`;
+          return;
+        }
+
+        grid.innerHTML = '';
+        projects.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'admin-proj-card';
+
+          const hasImage = p.imageUrl && p.imageUrl.trim() !== '';
+          const imgHtml = hasImage 
+            ? `<img src="${p.imageUrl}" class="admin-proj-img" />` 
+            : `<div class="admin-proj-img"><i class="fas fa-shield-halved" style="color:var(--secondary)"></i></div>`;
+
+          card.innerHTML = `
+            ${imgHtml}
+            <div class="admin-proj-info">
+              <h4>${p.title}</h4>
+              <p>${p.description}</p>
+            </div>
+            <button onclick="deleteProject('${p.id}')" class="btn btn-danger" style="padding: 10px;" title="Delete Project">
+              <i class="far fa-trash-can"></i>
+            </button>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        grid.innerHTML = `<div style="color:var(--error);padding:2rem;">Error: ${err.message}</div>`;
+      }
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('file_preview').src = e.target.result;
+        document.getElementById('file_name_display').innerText = file.name;
+        document.getElementById('file_preview_container').style.display = 'flex';
+      }
+      reader.readAsDataURL(file);
+    }
+
+    function clearSelectedFile() {
+      document.getElementById('p_file').value = '';
+      document.getElementById('p_image').value = '';
+      document.getElementById('file_preview_container').style.display = 'none';
+      document.getElementById('file_preview').src = '';
+      document.getElementById('file_name_display').innerText = '';
+    }
+
+    // Submit Project
+    async function submitProject() {
+      const title = document.getElementById('p_title').value.trim();
+      const description = document.getElementById('p_description').value.trim();
+      const linkUrl = document.getElementById('p_link').value.trim();
+      let imageUrl = document.getElementById('p_image').value.trim();
+      
+      const fileInput = document.getElementById('p_file');
+      const file = fileInput.files[0];
+
+      if (!title || !description) {
+        alert('Title and Description are required.');
+        return;
+      }
+
+      const submitBtn = document.querySelector('.submit-project-btn');
+      const originalText = submitBtn.innerText;
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Uploading assets...';
+
+      try {
+        // If a file is selected, upload it first
+        if (file) {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const uploadRes = await fetch(`/api/upload?passcode=${currentPasscode}`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json();
+            throw new Error(errData.error || 'Failed to upload image file.');
+          }
+
+          const uploadData = await uploadRes.json();
+          imageUrl = uploadData.filePath;
+        }
+
+        submitBtn.innerText = 'Publishing specs...';
+
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Passcode': currentPasscode
+          },
+          body: JSON.stringify({ title, description, linkUrl, imageUrl })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to submit project');
+        }
+
+        // Reset fields
+        document.getElementById('p_title').value = '';
+        document.getElementById('p_description').value = '';
+        document.getElementById('p_link').value = '';
+        clearSelectedFile();
+
+        alert('Project successfully published and synced with AI memory!');
+        loadProjects();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+      }
+    }
+
+    // Delete Project
+    async function deleteProject(id) {
+      if (!confirm('Are you sure you want to delete this project from the website and AI memory?')) return;
+      try {
+        const res = await fetch('/api/projects', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Passcode': currentPasscode
+          },
+          body: JSON.stringify({ id })
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        loadProjects();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

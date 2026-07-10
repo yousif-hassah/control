@@ -1,10 +1,11 @@
 {
   "name": "control",
   "version": "1.0.0",
-  "description": "Control website",
+  "description": "Control website with RAG AI assistant",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
+    "dev:api": "vercel dev",
     "build": "vite build",
     "preview": "vite preview"
   },

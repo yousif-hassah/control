@@ -26,11 +26,17 @@ const initCursor = () => {
   };
   animateRing();
 
-  // Hover state on interactive elements
-  const hoverTargets = "a, button, .project-card, .audit-card, .card, .footer-cta";
-  document.querySelectorAll(hoverTargets).forEach(el => {
-    el.addEventListener("mouseenter", () => ring.classList.add("hovered"));
-    el.addEventListener("mouseleave", () => ring.classList.remove("hovered"));
+  // Hover state on interactive elements (delegated to support dynamic AI chatbot elements)
+  const hoverTargets = "a, button, .project-card, .audit-card, .card, .footer-cta, .ai-chip, .ai-quote-btn, .ai-wizard-opt";
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest(hoverTargets)) {
+      ring.classList.add("hovered");
+    }
+  });
+  document.addEventListener("mouseout", (e) => {
+    if (!e.relatedTarget || !e.relatedTarget.closest(hoverTargets)) {
+      ring.classList.remove("hovered");
+    }
   });
 
   document.addEventListener("mousedown", () => ring.classList.add("clicking"));
@@ -72,6 +78,8 @@ const revealOnScroll = () => {
       }
     });
   }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+
+  window.revealObserver = observer;
 
   // Stagger siblings in a grid automatically
   document.querySelectorAll(".grid-base, .projects-grid, .audit-grid").forEach(grid => {
@@ -201,6 +209,80 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
+// ── Dynamic Projects Loader ──
+const loadDynamicProjects = async () => {
+  const grid = document.getElementById("projectsGrid");
+  if (!grid) return;
+
+  try {
+    const res = await fetch('/api/projects');
+    if (!res.ok) throw new Error('Failed to load projects');
+    const projects = await res.json();
+
+    if (projects.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-dim);">
+          No active deployments found.
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = '';
+    projects.forEach((p, idx) => {
+      const card = document.createElement('article');
+      card.className = 'project-card reveal';
+      card.style.transitionDelay = `${idx * 0.08}s`;
+
+      const hasImage = p.imageUrl && p.imageUrl.trim() !== '';
+
+      const mediaHtml = hasImage 
+        ? `<img src="${p.imageUrl}" alt="${p.title}" loading="lazy" />` 
+        : `
+          <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #111;">
+            <i class="fas fa-shield-halved" style="font-size: 3rem; color: var(--primary)"></i>
+          </div>
+        `;
+
+      const viewIconClass = hasImage ? 'fas fa-external-link-alt' : 'fas fa-shield-halved';
+
+      card.innerHTML = `
+        <div class="project-media">
+          ${mediaHtml}
+          <div class="project-view-icon"><i class="${viewIconClass}"></i></div>
+        </div>
+        <div class="project-info">
+          <h3>${p.title.startsWith('Sector:') || p.title.startsWith('Project:') ? p.title : 'Project: ' + p.title}</h3>
+          <p>${p.description}</p>
+          <a href="${p.linkUrl || '#'}" class="project-link" ${p.linkUrl !== '#' && p.linkUrl !== '' ? 'target="_blank"' : ''}>
+            ${p.linkUrl !== '#' && p.linkUrl !== '' ? 'Access Specs' : 'Audit Flow'} <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Stagger transition delays for dynamically loaded children
+    [...grid.children].forEach((child, i) => {
+      child.style.transitionDelay = (i * 0.08) + "s";
+    });
+
+    // Re-observe newly loaded elements
+    if (window.revealObserver) {
+      grid.querySelectorAll(".reveal").forEach(el => window.revealObserver.observe(el));
+    }
+
+  } catch (err) {
+    console.error('Error loading projects:', err);
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: #ff453a; border: 1px dashed rgba(255, 69, 58, 0.15); border-radius: 20px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 1.8rem; margin-bottom: 0.75rem;"></i>
+        <p>Failed to establish link with Operations database.</p>
+      </div>
+    `;
+  }
+};
+
 // ── Boot ──
 window.addEventListener("DOMContentLoaded", () => {
   initScrollSequence();
@@ -211,4 +293,5 @@ window.addEventListener("DOMContentLoaded", () => {
   initCursor();
   initScrollProgress();
   updateNavbar();
+  loadDynamicProjects();
 });
