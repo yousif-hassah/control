@@ -2,7 +2,7 @@ const { sbGet, sbInsert, sbDelete } = require('./supabase');
 const fs = require('fs');
 const path = require('path');
 
-const LOCAL_FILE = path.resolve(process.cwd(), 'api/projects.json');
+const LOCAL_FILE = path.resolve(process.cwd(), 'projects.json');
 const KNOWLEDGE_FILE = path.resolve(process.cwd(), 'api/knowledge.json');
 
 function isAdmin(req) {
