@@ -2,8 +2,8 @@ const { sbGet, sbInsert, sbUpdate, sbDelete } = require('./supabase');
 const fs = require('fs');
 const path = require('path');
 
-// Local JSON fallback path
-const LOCAL_FILE = path.resolve(process.cwd(), 'api/bookings.json');
+// Local JSON fallback path — kept at root to avoid Vercel filename conflicts with api/bookings.js
+const LOCAL_FILE = path.resolve(process.cwd(), 'bookings.json');
 
 function isAdmin(req) {
   const code = req.headers['x-admin-passcode'] || req.query?.passcode || req.body?.passcode;
