@@ -224,6 +224,40 @@
     .success h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
     .success p  { font-size: 0.9rem; color: var(--gray-2); line-height: 1.6; }
 
+    /* ── Booked / Taken day ── */
+    .day.booked {
+      color: var(--gray-3);
+      cursor: not-allowed;
+      position: relative;
+    }
+    .day.booked::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      background: rgba(255, 59, 48, 0.08);
+      border: 1px solid rgba(255, 59, 48, 0.25);
+    }
+    .day.booked::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255, 59, 48, 0.5);
+    }
+    .booked-label {
+      font-size: 0.65rem;
+      color: rgba(255,59,48,0.6);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+      display: block;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 560px) {
       .cal-header { padding: 1.1rem 1.25rem; }
@@ -344,6 +378,7 @@
     let cur = new Date();
     cur.setDate(1);
     let selectedDay = null;
+    let takenDates  = new Set(); // "YYYY-MM-DD" strings fetched from server
 
     const calMonth    = document.getElementById('calMonth');
     const calDays     = document.getElementById('calDays');
@@ -355,6 +390,20 @@
     const successPanel= document.getElementById('successPanel');
     const submitBtn   = document.getElementById('submitBtn');
 
+    // ── Fetch taken dates from the server ────────────────────────────────────
+    async function loadTakenDates() {
+      try {
+        const res = await fetch('/api/bookings?dates=true');
+        if (res.ok) {
+          const arr = await res.json();
+          takenDates = new Set(arr);
+        }
+      } catch (e) {
+        console.warn('Could not load taken dates:', e.message);
+      }
+      renderCalendar();
+    }
+
     function today0() {
       const t = new Date();
       return new Date(t.getFullYear(), t.getMonth(), t.getDate());
@@ -362,7 +411,11 @@
 
     function maxDate() {
       const t = new Date();
-      return new Date(t.getFullYear(), t.getMonth() + MAX_MONTHS_AHEAD + 1, 0); // last day of 3rd month
+      return new Date(t.getFullYear(), t.getMonth() + MAX_MONTHS_AHEAD + 1, 0);
+    }
+
+    function toDateStr(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
 
     function renderCalendar() {
@@ -374,7 +427,6 @@
       const total = new Date(y, m + 1, 0).getDate();
       const max   = maxDate();
 
-      // Nav button states
       const prevMonth = new Date(y, m - 1, 1);
       const nextMonth = new Date(y, m + 1, 1);
       prevBtn.disabled = prevMonth < new Date(now.getFullYear(), now.getMonth(), 1);
@@ -382,29 +434,37 @@
 
       calDays.innerHTML = '';
 
-      // Leading empty cells
       for (let i = 0; i < first; i++) {
         const el = document.createElement('div');
         el.className = 'day empty';
         calDays.appendChild(el);
       }
 
-      // Day cells
       for (let d = 1; d <= total; d++) {
         const el = document.createElement('div');
         el.className = 'day';
         el.textContent = d;
 
-        const date = new Date(y, m, d);
-        const isToday   = date.toDateString() === now.toDateString();
-        const isPast    = date < now;
-        const isWeekend = date.getDay() === 5 || date.getDay() === 6; // Fri & Sat off
-        const isBeyond  = date > max;
+        const date       = new Date(y, m, d);
+        const dateStr    = toDateStr(y, m, d);
+        const isToday    = date.toDateString() === now.toDateString();
+        const isPast     = date < now;
+        const isWeekend  = date.getDay() === 5 || date.getDay() === 6;
+        const isBeyond   = date > max;
+        const isBooked   = takenDates.has(dateStr);
 
         if (isToday) el.classList.add('today');
 
         if (isPast || isWeekend || isBeyond) {
           el.classList.add('past');
+        } else if (isBooked) {
+          el.classList.add('booked');
+          el.title = 'This day is fully booked';
+          // small label inside the cell
+          const lbl = document.createElement('span');
+          lbl.className = 'booked-label';
+          lbl.textContent = 'full';
+          el.appendChild(lbl);
         } else {
           if (selectedDay && selectedDay.d === d && selectedDay.m === m && selectedDay.y === y) {
             el.classList.add('selected');
@@ -423,11 +483,14 @@
       panelDate.textContent = `${dayName}, ${MONTHS[m]} ${d}, ${y}`;
       panel.classList.add('open');
       setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
-      renderCalendar(); // refresh selection highlight
+      renderCalendar();
     }
 
     function clearForm() {
-      ['f_name','f_phone','f_email','f_project','f_notes','f_budget'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+      ['f_name','f_phone','f_email','f_project','f_notes','f_budget'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
       document.getElementById('f_service').selectedIndex = 0;
       const otherEl = document.getElementById('f_service_other');
       otherEl.value = '';
@@ -474,8 +537,8 @@
         return;
       }
 
-      const dateStr = selectedDay 
-        ? `${selectedDay.y}-${String(selectedDay.m + 1).padStart(2, '0')}-${String(selectedDay.d).padStart(2, '0')}` 
+      const dateStr = selectedDay
+        ? toDateStr(selectedDay.y, selectedDay.m, selectedDay.d)
         : new Date().toISOString().split('T')[0];
 
       submitBtn.disabled = true;
@@ -489,7 +552,23 @@
           body: JSON.stringify({ name, phone, email, project, budget, service, notes, date: dateStr })
         });
 
+        if (response.status === 409) {
+          // Date was just taken by someone else — refresh calendar
+          takenDates.add(dateStr);
+          renderCalendar();
+          panel.classList.remove('open');
+          selectedDay = null;
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          alert('Sorry, this date was just booked by someone else. Please choose a different day.');
+          return;
+        }
+
         if (!response.ok) throw new Error('Submission failed');
+
+        // Mark the date as taken locally so calendar updates instantly
+        takenDates.add(dateStr);
+        renderCalendar();
 
         panel.classList.remove('open');
         successPanel.classList.add('open');
@@ -504,7 +583,8 @@
     prevBtn.addEventListener('click', () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); });
     nextBtn.addEventListener('click', () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); });
 
-    renderCalendar();
+    // Initial load: fetch taken dates then render
+    loadTakenDates();
   </script>
 
 </body>

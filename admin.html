@@ -481,9 +481,10 @@
           const card = document.createElement('div');
           card.className = 'booking-card';
 
-          const formattedDate = new Date(b.createdAt).toLocaleString('en-US', {
+          const dateVal = b.created_at || b.createdAt || b.date;
+          const formattedDate = dateVal ? new Date(dateVal).toLocaleString('en-US', {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-          });
+          }) : '—';
 
           // Clean phone number for WhatsApp wa.me link
           const waPhone = b.phone.replace(/[^0-9]/g, '');
