@@ -3,14 +3,15 @@
  * Works in Node.js without installing @supabase/supabase-js
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const REST = SUPABASE_URL ? `${SUPABASE_URL}/rest/v1` : '';
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables.');
+function checkConfig() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables in Vercel.');
+  }
 }
-
-const REST = `${SUPABASE_URL}/rest/v1`;
 
 /**
  * @param {string} table  e.g. "bookings"
@@ -18,6 +19,7 @@ const REST = `${SUPABASE_URL}/rest/v1`;
  * @param {string} [prefer] e.g. "return=representation"
  */
 async function sbGet(table, query = 'select=*') {
+  checkConfig();
   const res = await fetch(`${REST}/${table}?${query}`, {
     headers: {
       apikey: SUPABASE_SERVICE_KEY,
@@ -33,6 +35,7 @@ async function sbGet(table, query = 'select=*') {
 }
 
 async function sbInsert(table, data) {
+  checkConfig();
   const res = await fetch(`${REST}/${table}`, {
     method: 'POST',
     headers: {
@@ -52,6 +55,7 @@ async function sbInsert(table, data) {
 }
 
 async function sbUpdate(table, match, data) {
+  checkConfig();
   const matchStr = Object.entries(match)
     .map(([k, v]) => `${k}=eq.${encodeURIComponent(v)}`)
     .join('&');
@@ -74,6 +78,7 @@ async function sbUpdate(table, match, data) {
 }
 
 async function sbDelete(table, match) {
+  checkConfig();
   const matchStr = Object.entries(match)
     .map(([k, v]) => `${k}=eq.${encodeURIComponent(v)}`)
     .join('&');
@@ -100,6 +105,7 @@ async function sbDelete(table, match) {
  * @returns {string} public URL
  */
 async function sbUpload(bucket, filename, buffer, mimeType) {
+  checkConfig();
   const storageUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filename}`;
   const res = await fetch(storageUrl, {
     method: 'POST',

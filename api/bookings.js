@@ -17,7 +17,11 @@ function localRead() {
 }
 
 function localWrite(data) {
-  fs.writeFileSync(LOCAL_FILE, JSON.stringify(data, null, 2), 'utf8');
+  try {
+    fs.writeFileSync(LOCAL_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('[bookings] Local write failed (read-only file system):', err.message);
+  }
 }
 
 module.exports = async function handler(req, res) {
