@@ -6,7 +6,8 @@ const path = require('path');
 const LOCAL_FILE = path.resolve(process.cwd(), 'bookings.json');
 
 function isAdmin(req) {
-  const code = req.headers['x-admin-passcode'] || req.query?.passcode || req.body?.passcode;
+  // Accept passcode via header ONLY — never via URL query params (prevents log exposure)
+  const code = req.headers['x-admin-passcode'];
   const correctCode = process.env.ADMIN_PASSCODE || 'control2026';
   return code === correctCode;
 }

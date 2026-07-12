@@ -84,6 +84,11 @@
     .lock-error {
       color: var(--error); font-size: 0.85rem; margin-top: 1rem; display: none;
     }
+    .lock-countdown {
+      margin-top: 1rem; font-size: 0.82rem;
+      color: var(--secondary); line-height: 1.6;
+    }
+    .lock-countdown strong { color: var(--warning); }
 
     /* --- Navbar --- */
     .header {
@@ -265,9 +270,10 @@
     <div class="lock-card">
       <div class="lock-logo">CONTROL™</div>
       <div class="lock-sub">Operations Integrity Panel</div>
-      <input type="password" id="passcodeInput" class="lock-input" placeholder="••••" maxlength="12" />
+      <input type="password" id="passcodeInput" class="lock-input" placeholder="••••" maxlength="32" />
       <button id="unlockBtn" class="lock-btn">Unlock Console</button>
       <div id="lockError" class="lock-error">Passcode rejected. Access denied.</div>
+      <div id="lockCountdown" class="lock-countdown" style="display:none;"></div>
     </div>
   </div>
 
@@ -373,10 +379,22 @@
   </main>
 
   <script>
-    let currentPasscode = localStorage.getItem('ctrl_admin_passcode') || '';
+    // ── Security constants ────────────────────────────────────────────────────
+    const MAX_ATTEMPTS   = 3;          // lock after this many wrong tries
+    const LOCKOUT_MS     = 5 * 60 * 1000; // 5-minute lockout
+    const SESSION_KEY    = 'ctrl_admin_pc';
+    const FAIL_COUNT_KEY = 'ctrl_fail_count';
+    const LOCKED_KEY     = 'ctrl_locked_until';
 
-    // Initialize Auth
+    let currentPasscode  = sessionStorage.getItem(SESSION_KEY) || '';
+    let countdownTimer   = null;
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
+      if (isLockedOut()) {
+        showLockout();
+        return;
+      }
       if (currentPasscode) {
         verifyPasscode(currentPasscode, true);
       } else {
@@ -385,14 +403,67 @@
       }
     });
 
-    // Passcode Lock / Unlock Logic
+    // ── Lockout helpers ──────────────────────────────────────────────────────
+    function isLockedOut() {
+      const until = parseInt(sessionStorage.getItem(LOCKED_KEY) || '0', 10);
+      return Date.now() < until;
+    }
+
+    function getRemainingMs() {
+      const until = parseInt(sessionStorage.getItem(LOCKED_KEY) || '0', 10);
+      return Math.max(0, until - Date.now());
+    }
+
+    function recordFailure() {
+      const count = parseInt(sessionStorage.getItem(FAIL_COUNT_KEY) || '0', 10) + 1;
+      sessionStorage.setItem(FAIL_COUNT_KEY, count);
+      if (count >= MAX_ATTEMPTS) {
+        sessionStorage.setItem(LOCKED_KEY, Date.now() + LOCKOUT_MS);
+        sessionStorage.removeItem(FAIL_COUNT_KEY);
+        showLockout();
+        return true; // locked
+      }
+      return false;
+    }
+
+    function showLockout() {
+      const input   = document.getElementById('passcodeInput');
+      const btn     = document.getElementById('unlockBtn');
+      const cd      = document.getElementById('lockCountdown');
+      const errEl   = document.getElementById('lockError');
+
+      errEl.style.display = 'none';
+      input.disabled = true;
+      btn.disabled   = true;
+      cd.style.display = 'block';
+
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        const rem = getRemainingMs();
+        if (rem <= 0) {
+          clearInterval(countdownTimer);
+          input.disabled = false;
+          btn.disabled   = false;
+          cd.style.display = 'none';
+          input.focus();
+          return;
+        }
+        const m = String(Math.floor(rem / 60000)).padStart(2, '0');
+        const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+        cd.innerHTML = `Too many failed attempts.<br>Try again in <strong>${m}:${s}</strong>.`;
+      }, 500);
+    }
+
+    // ── Auth ─────────────────────────────────────────────────────────────────
     document.getElementById('unlockBtn').addEventListener('click', () => {
+      if (isLockedOut()) return;
       const code = document.getElementById('passcodeInput').value.trim();
       verifyPasscode(code);
     });
 
     document.getElementById('passcodeInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        if (isLockedOut()) return;
         const code = document.getElementById('passcodeInput').value.trim();
         verifyPasscode(code);
       }
@@ -403,23 +474,36 @@
       errorMsg.style.display = 'none';
 
       try {
-        // Retrieve bookings using the passcode as authentication
-        const response = await fetch(`/api/bookings?passcode=${code}`);
-        
+        // Passcode sent ONLY via header — never in the URL
+        const response = await fetch('/api/bookings', {
+          headers: { 'X-Admin-Passcode': code }
+        });
+
         if (response.ok) {
           currentPasscode = code;
-          localStorage.setItem('ctrl_admin_passcode', code);
+          sessionStorage.setItem(SESSION_KEY, code);
+          sessionStorage.removeItem(FAIL_COUNT_KEY);
+          sessionStorage.removeItem(LOCKED_KEY);
           document.getElementById('lockScreen').classList.add('hidden');
           loadAllData();
         } else {
-          throw new Error('Authentication failed');
+          throw new Error('Auth failed');
         }
       } catch (err) {
-        localStorage.removeItem('ctrl_admin_passcode');
+        sessionStorage.removeItem(SESSION_KEY);
+        currentPasscode = '';
+
         if (!silent) {
-          errorMsg.style.display = 'block';
-          document.getElementById('passcodeInput').value = '';
-          document.getElementById('passcodeInput').focus();
+          const locked = recordFailure();
+          if (!locked) {
+            const remaining = MAX_ATTEMPTS - parseInt(sessionStorage.getItem(FAIL_COUNT_KEY) || '0', 10);
+            errorMsg.textContent = remaining > 0
+              ? `Passcode rejected. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`
+              : 'Passcode rejected. Access denied.';
+            errorMsg.style.display = 'block';
+            document.getElementById('passcodeInput').value = '';
+            document.getElementById('passcodeInput').focus();
+          }
         } else {
           document.getElementById('lockScreen').classList.remove('hidden');
           document.getElementById('passcodeInput').focus();
@@ -428,7 +512,7 @@
     }
 
     function logout() {
-      localStorage.removeItem('ctrl_admin_passcode');
+      sessionStorage.removeItem(SESSION_KEY);
       currentPasscode = '';
       document.getElementById('lockScreen').classList.remove('hidden');
       document.getElementById('passcodeInput').value = '';
@@ -457,7 +541,10 @@
     async function loadBookings() {
       const list = document.getElementById('bookingsList');
       try {
-        const res = await fetch(`/api/bookings?passcode=${currentPasscode}`);
+        // Passcode sent via header only — never exposed in URL
+        const res = await fetch('/api/bookings', {
+          headers: { 'X-Admin-Passcode': currentPasscode }
+        });
         if (!res.ok) throw new Error('Failed to retrieve bookings');
         const bookings = await res.json();
 
