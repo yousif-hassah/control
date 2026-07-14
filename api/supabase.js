@@ -104,8 +104,46 @@ async function sbDelete(table, match) {
  * @param {string} mimeType e.g. "image/png"
  * @returns {string} public URL
  */
+/**
+ * Ensure a Supabase Storage bucket exists; creates it (public) if not.
+ * Silently ignores "already exists" errors.
+ */
+async function sbEnsureBucket(bucket) {
+  checkConfig();
+  const url = `${SUPABASE_URL}/storage/v1/bucket`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: bucket, name: bucket, public: true }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    // Ignore "already exists" — that's fine
+    if (!body.includes('already exists') && !body.includes('Duplicate')) {
+      console.warn(`[supabase] Could not create bucket "${bucket}": ${body}`);
+    }
+  }
+}
+
+/**
+ * Upload a file buffer to Supabase Storage.
+ * Auto-creates the bucket if it does not exist.
+ * @param {string} bucket  e.g. "project-images"
+ * @param {string} filename e.g. "1720000000.png"
+ * @param {Buffer} buffer
+ * @param {string} mimeType e.g. "image/png"
+ * @returns {string} public URL
+ */
 async function sbUpload(bucket, filename, buffer, mimeType) {
   checkConfig();
+
+  // Auto-create bucket if missing (safe to call even if it already exists)
+  await sbEnsureBucket(bucket);
+
   const storageUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filename}`;
   const res = await fetch(storageUrl, {
     method: 'POST',
@@ -126,4 +164,4 @@ async function sbUpload(bucket, filename, buffer, mimeType) {
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`;
 }
 
-module.exports = { sbGet, sbInsert, sbUpdate, sbDelete, sbUpload };
+module.exports = { sbGet, sbInsert, sbUpdate, sbDelete, sbUpload, sbEnsureBucket };

@@ -84,14 +84,27 @@ module.exports = async function handler(req, res) {
       const publicUrl = await sbUpload(STORAGE_BUCKET, uniqueFilename, fileBuffer, mimeType);
       return res.status(200).json({ success: true, filePath: publicUrl });
     } catch (uploadErr) {
-      console.warn('[upload] Supabase Storage failed, saving locally:', uploadErr.message);
+      console.warn('[upload] Supabase Storage failed:', uploadErr.message);
 
-      // Fallback: save locally in img.projects/
-      const uploadDir = path.resolve(process.cwd(), 'img.projects');
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-      const targetPath = path.join(uploadDir, uniqueFilename);
-      fs.writeFileSync(targetPath, fileBuffer);
-      return res.status(200).json({ success: true, filePath: `img.projects/${uniqueFilename}` });
+      // On Vercel (or any read-only environment), local file writes are not possible.
+      // Return a clear error so the admin knows to fix the Supabase bucket.
+      if (process.env.VERCEL) {
+        return res.status(503).json({
+          error: 'Image upload failed: Supabase Storage bucket "project-images" is not configured. Please create a public bucket named "project-images" in your Supabase dashboard.'
+        });
+      }
+
+      // Fallback (local dev only): save to img.projects/
+      try {
+        const uploadDir = path.resolve(process.cwd(), 'img.projects');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        const targetPath = path.join(uploadDir, uniqueFilename);
+        fs.writeFileSync(targetPath, fileBuffer);
+        return res.status(200).json({ success: true, filePath: `img.projects/${uniqueFilename}` });
+      } catch (fsErr) {
+        console.warn('[upload] Local fallback also failed:', fsErr.message);
+        return res.status(500).json({ error: 'Upload failed: ' + uploadErr.message });
+      }
     }
 
   } catch (err) {
