@@ -213,5 +213,15 @@
       "اعمال"
     ],
     "content": "مشروع hello (رابط المعاينة: http://localhost:51): hhhhhhhhhhhh"
+  },
+  {
+    "id": "project_proj_1784055519825",
+    "category": "projects",
+    "keywords": [
+      "yastudio",
+      "مشروع",
+      "اعمال"
+    ],
+    "content": "مشروع Yastudio (رابط المعاينة: https://www.yastudio.org/): A website with a complete booking system and a store selling shaving products, complete with system management and a user interface for barbers to receive customers."
   }
 ]
