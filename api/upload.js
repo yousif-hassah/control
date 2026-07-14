@@ -28,7 +28,16 @@ module.exports = async function handler(req, res) {
     if (!boundaryMatch) return res.status(400).json({ error: 'No boundary found' });
 
     const boundary = '--' + boundaryMatch[1];
-    const buffer = req.rawBody;
+    let buffer = req.rawBody;
+    if (!buffer) {
+      buffer = await new Promise((resolve, reject) => {
+        const chunks = [];
+        req.on('data', chunk => chunks.push(chunk));
+        req.on('end', () => resolve(Buffer.concat(chunks)));
+        req.on('error', err => reject(err));
+      });
+    }
+
     if (!buffer || buffer.length === 0) {
       return res.status(400).json({ error: 'Empty upload body' });
     }
