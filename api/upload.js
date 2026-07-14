@@ -1,23 +1,21 @@
 const { sbUpload } = require('./supabase');
+const { checkAuth, setCORSHeaders } = require('./auth');
 const fs = require('fs');
 const path = require('path');
 
 const STORAGE_BUCKET = 'project-images';
 
-function isAdmin(req) {
-  const code = req.headers['x-admin-passcode'] || req.query?.passcode;
-  const correctCode = process.env.ADMIN_PASSCODE || 'control2026';
-  return code === correctCode;
-}
-
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Passcode');
+  setCORSHeaders(req, res, 'POST, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+  const auth = checkAuth(req);
+  if (!auth.ok) {
+    if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+    return res.status(auth.status).json({ error: auth.error });
+  }
 
   try {
     const contentType = req.headers['content-type'] || '';

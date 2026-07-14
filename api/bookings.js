@@ -1,16 +1,10 @@
 const { sbGet, sbInsert, sbUpdate, sbDelete } = require('./supabase');
+const { checkAuth, setCORSHeaders } = require('./auth');
 const fs = require('fs');
 const path = require('path');
 
 // Local JSON fallback path — kept at root to avoid Vercel filename conflicts with api/bookings.js
 const LOCAL_FILE = path.resolve(process.cwd(), 'bookings.json');
-
-function isAdmin(req) {
-  // Accept passcode via header ONLY — never via URL query params (prevents log exposure)
-  const code = req.headers['x-admin-passcode'];
-  const correctCode = process.env.ADMIN_PASSCODE || 'control2026';
-  return code === correctCode;
-}
 
 function localRead() {
   if (!fs.existsSync(LOCAL_FILE)) return [];
@@ -49,9 +43,7 @@ async function getBookedDates() {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Passcode');
+  setCORSHeaders(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -125,7 +117,11 @@ module.exports = async function handler(req, res) {
 
   // ── GET — Fetch all bookings (admin only) ────────────────────────────────────
   if (req.method === 'GET') {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
 
     let supabaseRows = [];
     let supabaseFailed = false;
@@ -167,7 +163,11 @@ module.exports = async function handler(req, res) {
 
   // ── PATCH — Update booking status (admin only) ───────────────────────────────
   if (req.method === 'PATCH') {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
 
     const { id, status } = req.body;
     if (!id || !status) return res.status(400).json({ error: 'id and status are required.' });
@@ -201,7 +201,11 @@ module.exports = async function handler(req, res) {
 
   // ── DELETE — Remove booking (admin only) ─────────────────────────────────────
   if (req.method === 'DELETE') {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
 
     const { id } = req.body;
     if (!id) return res.status(400).json({ error: 'id is required.' });

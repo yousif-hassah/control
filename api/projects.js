@@ -1,15 +1,10 @@
 const { sbGet, sbInsert, sbDelete } = require('./supabase');
+const { checkAuth, setCORSHeaders } = require('./auth');
 const fs = require('fs');
 const path = require('path');
 
 const LOCAL_FILE = path.resolve(process.cwd(), 'projects.json');
 const KNOWLEDGE_FILE = path.resolve(process.cwd(), 'api/knowledge.json');
-
-function isAdmin(req) {
-  const code = req.headers['x-admin-passcode'] || req.query?.passcode || req.body?.passcode;
-  const correctCode = process.env.ADMIN_PASSCODE || 'control2026';
-  return code === correctCode;
-}
 
 function localRead() {
   if (!fs.existsSync(LOCAL_FILE)) return [];
@@ -54,9 +49,7 @@ function syncKnowledge(project, remove = false) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Passcode');
+  setCORSHeaders(req, res, 'GET, POST, DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -82,7 +75,11 @@ module.exports = async function handler(req, res) {
 
   // ── POST — Add project (admin only) ─────────────────────────────────────────
   if (req.method === 'POST') {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
 
     const { title, description, imageUrl, linkUrl } = req.body;
     if (!title || !description) {
@@ -129,7 +126,11 @@ module.exports = async function handler(req, res) {
 
   // ── DELETE — Remove project (admin only) ─────────────────────────────────────
   if (req.method === 'DELETE') {
-    if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
 
     const { id } = req.body;
     if (!id) return res.status(400).json({ error: 'id is required.' });
