@@ -327,7 +327,7 @@
         
         <!-- Add Project Form -->
         <div class="form-panel">
-          <div class="form-title"><i class="fas fa-plus-circle"></i> Deploy New Specs</div>
+          <div class="form-title" id="formTitle"><i class="fas fa-plus-circle"></i> Deploy New Specs</div>
           
           <div class="field">
             <label>Project Title / Client</label>
@@ -359,7 +359,8 @@
             </div>
           </div>
 
-          <button onclick="submitProject()" class="submit-project-btn">Publish to Website & AI</button>
+          <button id="submitProjBtn" onclick="submitProject()" class="submit-project-btn">Publish to Website & AI</button>
+          <button id="cancelEditBtn" onclick="cancelEditProject()" class="btn btn-outline" style="display: none; width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">Cancel Edit</button>
         </div>
 
         <!-- Current Projects List -->
@@ -386,6 +387,10 @@
 
     let currentPasscode = ''; // memory only — cleared on page refresh
     let countdownTimer  = null;
+
+    let currentProjects = [];
+    let editingProjectId = null;
+    let editingProjectOriginalImage = '';
 
     // ── Boot ─────────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
@@ -616,6 +621,7 @@
         if (!res.ok) throw new Error('Failed to load projects');
         const projects = await res.json();
 
+        currentProjects = projects;
         document.getElementById('projCount').innerText = projects.length;
 
         if (projects.length === 0) {
@@ -639,15 +645,68 @@
               <h4>${p.title}</h4>
               <p>${p.description}</p>
             </div>
-            <button onclick="deleteProject('${p.id}')" class="btn btn-danger" style="padding: 10px;" title="Delete Project">
-              <i class="far fa-trash-can"></i>
-            </button>
+            <div class="btn-group" style="margin-left: auto; gap: 8px;">
+              <button onclick="startEditProject('${p.id}')" class="btn btn-outline" style="padding: 10px;" title="Edit Project">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="deleteProject('${p.id}')" class="btn btn-danger" style="padding: 10px;" title="Delete Project">
+                <i class="far fa-trash-can"></i>
+              </button>
+            </div>
           `;
           grid.appendChild(card);
         });
       } catch (err) {
         grid.innerHTML = `<div style="color:var(--error);padding:2rem;">Error: ${err.message}</div>`;
       }
+    }
+
+    function startEditProject(id) {
+      const p = currentProjects.find(item => item.id === id);
+      if (!p) return;
+      
+      editingProjectId = p.id;
+      editingProjectOriginalImage = p.imageUrl || '';
+      
+      document.getElementById('p_title').value = p.title;
+      document.getElementById('p_description').value = p.description;
+      document.getElementById('p_link').value = p.linkUrl === '#' ? '' : p.linkUrl;
+      
+      // Update form UI
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Project Specs';
+      const submitBtn = document.getElementById('submitProjBtn');
+      submitBtn.innerText = 'Save Project Changes';
+      submitBtn.style.background = 'var(--success)';
+      
+      // Show file preview if image exists
+      if (p.imageUrl) {
+        document.getElementById('file_preview').src = p.imageUrl;
+        document.getElementById('file_name_display').innerText = p.imageUrl.substring(p.imageUrl.lastIndexOf('/') + 1);
+        document.getElementById('file_preview_container').style.display = 'flex';
+      } else {
+        clearSelectedFile();
+      }
+      
+      document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+      document.getElementById('p_title').focus();
+    }
+
+    function cancelEditProject() {
+      editingProjectId = null;
+      editingProjectOriginalImage = '';
+      
+      document.getElementById('p_title').value = '';
+      document.getElementById('p_description').value = '';
+      document.getElementById('p_link').value = '';
+      clearSelectedFile();
+      
+      // Reset form UI
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Deploy New Specs';
+      const submitBtn = document.getElementById('submitProjBtn');
+      submitBtn.innerText = 'Publish to Website & AI';
+      submitBtn.style.background = 'var(--primary)';
+      
+      document.getElementById('cancelEditBtn').style.display = 'none';
     }
 
     function handleFileSelect(event) {
@@ -671,7 +730,7 @@
       document.getElementById('file_name_display').innerText = '';
     }
 
-    // Submit Project
+    // Submit Project (Handles both POST and PUT)
     async function submitProject() {
       const title = document.getElementById('p_title').value.trim();
       const description = document.getElementById('p_description').value.trim();
@@ -686,10 +745,10 @@
         return;
       }
 
-      const submitBtn = document.querySelector('.submit-project-btn');
+      const submitBtn = document.getElementById('submitProjBtn');
       const originalText = submitBtn.innerText;
       submitBtn.disabled = true;
-      submitBtn.innerText = 'Uploading assets...';
+      submitBtn.innerText = file ? 'Uploading assets...' : 'Saving...';
 
       try {
         // If a file is selected, upload it first
@@ -710,37 +769,42 @@
 
           const uploadData = await uploadRes.json();
           imageUrl = uploadData.filePath;
+        } else if (editingProjectId) {
+          // If editing and no new file selected, preserve the original image
+          imageUrl = editingProjectOriginalImage;
         }
 
         submitBtn.innerText = 'Publishing specs...';
 
-        const res = await fetch('/api/projects', {
-          method: 'POST',
+        const isEdit = editingProjectId !== null;
+        const url = '/api/projects';
+        const method = isEdit ? 'PUT' : 'POST';
+        const bodyData = isEdit 
+          ? { id: editingProjectId, title, description, linkUrl, imageUrl }
+          : { title, description, linkUrl, imageUrl };
+
+        const res = await fetch(url, {
+          method: method,
           headers: {
             'Content-Type': 'application/json',
             'X-Admin-Passcode': currentPasscode
           },
-          body: JSON.stringify({ title, description, linkUrl, imageUrl })
+          body: JSON.stringify(bodyData)
         });
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || 'Failed to submit project');
+          throw new Error(data.error || `Failed to ${isEdit ? 'update' : 'submit'} project`);
         }
 
-        // Reset fields
-        document.getElementById('p_title').value = '';
-        document.getElementById('p_description').value = '';
-        document.getElementById('p_link').value = '';
-        clearSelectedFile();
-
-        alert('Project successfully published and synced with AI memory!');
+        alert(isEdit ? 'Project successfully updated and synced with AI memory!' : 'Project successfully published and synced with AI memory!');
+        cancelEditProject();
         loadProjects();
       } catch (err) {
         alert(err.message);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerText = originalText;
+        submitBtn.innerText = editingProjectId ? 'Save Project Changes' : 'Publish to Website & AI';
       }
     }
 
@@ -757,6 +821,7 @@
           body: JSON.stringify({ id })
         });
         if (!res.ok) throw new Error('Delete failed');
+        if (editingProjectId === id) cancelEditProject();
         loadProjects();
       } catch (err) {
         alert(err.message);

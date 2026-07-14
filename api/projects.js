@@ -49,7 +49,7 @@ function syncKnowledge(project, remove = false) {
 }
 
 module.exports = async function handler(req, res) {
-  setCORSHeaders(req, res, 'GET, POST, DELETE, OPTIONS');
+  setCORSHeaders(req, res, 'GET, POST, PUT, DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -121,6 +121,63 @@ module.exports = async function handler(req, res) {
       localWrite(all);
       syncKnowledge({ ...project, link_url: linkUrl || '#' });
       return res.status(200).json({ success: true, project: localProj });
+    }
+  }
+
+  // ── PUT — Update project (admin only) ───────────────────────────────────────
+  if (req.method === 'PUT') {
+    const auth = checkAuth(req);
+    if (!auth.ok) {
+      if (auth.retryAfterSec) res.setHeader('Retry-After', auth.retryAfterSec);
+      return res.status(auth.status).json({ error: auth.error });
+    }
+
+    const { id, title, description, imageUrl, linkUrl } = req.body;
+    if (!id || !title || !description) {
+      return res.status(400).json({ error: 'ID, title and description are required.' });
+    }
+
+    const updatedProject = {
+      title,
+      description,
+      image_url: imageUrl || '',
+      link_url: linkUrl || '#',
+    };
+
+    try {
+      const saved = await sbUpdate('projects', { id }, updatedProject);
+      const out = {
+        id,
+        title,
+        description,
+        imageUrl: saved.image_url || '',
+        linkUrl: saved.link_url || '#',
+        createdAt: saved.created_at,
+      };
+      // Re-sync AI knowledge
+      syncKnowledge({ id }, true);
+      syncKnowledge({ id, title, description, link_url: linkUrl || '#' });
+      return res.status(200).json({ success: true, project: out });
+    } catch (err) {
+      console.warn('[projects] Supabase UPDATE failed, using local fallback:', err.message);
+      const all = localRead();
+      const idx = all.findIndex(p => p.id === id);
+      if (idx === -1) return res.status(404).json({ error: 'Project not found.' });
+
+      all[idx] = {
+        ...all[idx],
+        title,
+        description,
+        imageUrl: imageUrl || '',
+        linkUrl: linkUrl || '#',
+      };
+      localWrite(all);
+      
+      // Re-sync AI knowledge
+      syncKnowledge({ id }, true);
+      syncKnowledge({ id, title, description, link_url: linkUrl || '#' });
+
+      return res.status(200).json({ success: true, project: all[idx] });
     }
   }
 
