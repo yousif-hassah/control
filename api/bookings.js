@@ -42,6 +42,107 @@ async function getBookedDates() {
   return localDates; // Set<string> of "YYYY-MM-DD"
 }
 
+/**
+ * Sends a notification email to controltxt.11@gmail.com via Resend when a new booking is created.
+ */
+async function sendNotificationEmail(booking) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[bookings] RESEND_API_KEY is not defined in environment variables.');
+    return;
+  }
+
+  const waPhone = booking.phone.replace(/[^0-9]/g, '');
+  const waLink = waPhone.startsWith('0') ? '964' + waPhone.substring(1) : waPhone;
+
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #050505; color: #f5f5f7; padding: 40px 20px; max-width: 600px; margin: 0 auto; border-radius: 16px; border: 1px solid #18181c;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 24px; font-weight: 800; letter-spacing: 2px; color: #ffffff; margin: 0;">CONTROL™</h1>
+        <p style="font-size: 12px; color: #86868b; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px;">Operations Integrity System</p>
+      </div>
+      
+      <div style="background-color: #0f0f11; border-radius: 12px; padding: 24px; border: 1px solid #1c1c21; margin-bottom: 24px;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #f5f5f7; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #1c1c21; padding-bottom: 10px;">
+          New Consultation Booking
+        </h2>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px; width: 120px;">Booking ID:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.id}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Date requested:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.date}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Client Name:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Phone / WhatsApp:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;"><a href="https://wa.me/${waLink}" style="color: #30d158; text-decoration: none; font-weight: bold;">${booking.phone} (Chat)</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Email:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.email ? `<a href="mailto:${booking.email}" style="color: #2997ff; text-decoration: none;">${booking.email}</a>` : '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Service Type:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.service}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #86868b; font-size: 13px;">Budget:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${booking.budget || '—'}</td>
+          </tr>
+        </table>
+        
+        ${booking.project ? `
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #1c1c21;">
+          <h3 style="font-size: 11px; text-transform: uppercase; color: #86868b; margin-top: 0; margin-bottom: 8px; letter-spacing: 0.5px;">Project Description:</h3>
+          <p style="font-size: 14px; line-height: 1.6; color: #ffffff; margin: 0; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border-left: 2px solid #86868b;">${booking.project}</p>
+        </div>` : ''}
+
+        ${booking.notes ? `
+        <div style="margin-top: 15px;">
+          <h3 style="font-size: 11px; text-transform: uppercase; color: #86868b; margin-top: 0; margin-bottom: 8px; letter-spacing: 0.5px;">Notes / Custom Requests:</h3>
+          <p style="font-size: 14px; line-height: 1.6; color: #86868b; margin: 0;">${booking.notes}</p>
+        </div>` : ''}
+      </div>
+
+      <div style="text-align: center;">
+        <a href="https://www.controlcode.click/admin" style="display: inline-block; padding: 12px 24px; background-color: #ffffff; color: #000000; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">Open Admin Panel</a>
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'CONTROL Bookings <onboarding@resend.dev>',
+        to: ['controltxt.11@gmail.com'],
+        subject: `New Booking Consultation: ${booking.name}`,
+        html: htmlContent
+      })
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('[bookings] Resend API error:', errorText);
+    } else {
+      console.log('[bookings] Notification email sent successfully.');
+    }
+  } catch (err) {
+    console.error('[bookings] Failed to send email via Resend:', err.message);
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCORSHeaders(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
 
@@ -86,6 +187,7 @@ module.exports = async function handler(req, res) {
 
     try {
       const saved = await sbInsert('bookings', booking);
+      await sendNotificationEmail(booking);
       return res.status(200).json({ success: true, booking: saved || booking });
     } catch (err) {
       console.warn('[bookings] Supabase insert failed, trying fallback options:', err.message);
@@ -101,6 +203,8 @@ module.exports = async function handler(req, res) {
           all.push(booking);
           localWrite(all);
 
+          await sendNotificationEmail(booking);
+
           return res.status(200).json({ success: true, booking: { ...saved, email: booking.email } });
         } catch (err2) {
           console.warn('[bookings] Retry without email also failed:', err2.message);
@@ -111,6 +215,7 @@ module.exports = async function handler(req, res) {
       const all = localRead();
       all.push(booking);
       localWrite(all);
+      await sendNotificationEmail(booking);
       return res.status(200).json({ success: true, booking });
     }
   }
