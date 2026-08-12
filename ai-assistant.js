@@ -17,7 +17,264 @@ class ControlAIAssistant {
     this.initAudio();
     this.renderWidget();
     this.bindEvents();
-  }
+
+    // ── AI Mini Calendar — site-matching dark calendar ──────────────────────
+    window._aiMCState = window._aiMCState || {};
+
+    /** Build and attach the calendar DOM directly into cardEl (avoids <script> injection) */
+    window._buildAiMiniCal = (cardId, cardEl, prefillData = {}) => {
+      const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const AR_DAYS  = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      const WDS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const MAX_AHEAD = 3;
+
+      let state = {
+        cur: (() => { const d = new Date(); d.setDate(1); return d; })(),
+        selectedDay: null,
+        takenDates: new Set()
+      };
+      window._aiMCState[cardId] = state;
+
+      // ── DOM structure ────────────────────────────────────────────────────
+      const wrap = document.createElement('div');
+      wrap.className = 'ai-interactive-booking-card';
+      wrap.id = `card_${cardId}`;
+
+      wrap.innerHTML = `
+        <div class="ai-card-header">
+          <div class="ai-card-title"><i class="fas fa-calendar-check" style="color:#30d158;"></i> استمارة حجز موعد تفاعلية</div>
+          <div class="ai-card-subtitle">اختر اليوم من التقويم ثم أكمل بياناتك لتثبيت الحجز</div>
+        </div>
+        <div class="ai-mini-cal" id="aimc_cal_${cardId}">
+          <div class="ai-mini-cal-header">
+            <div class="ai-mini-cal-month" id="aimc_month_${cardId}">…</div>
+            <div class="ai-mini-cal-nav">
+              <button type="button" class="ai-mini-cal-btn" id="aimc_prev_${cardId}"><i class="fas fa-chevron-left"></i></button>
+              <button type="button" class="ai-mini-cal-btn" id="aimc_next_${cardId}"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="ai-mini-cal-body">
+            <div class="ai-mini-cal-weekdays">
+              ${WDS.map(w => `<div class="ai-mini-cal-wd">${w}</div>`).join('')}
+            </div>
+            <div class="ai-mini-cal-days" id="aimc_days_${cardId}"></div>
+          </div>
+          <!-- Form appears below when a day is clicked -->
+          <div class="ai-mini-cal-form" id="aimc_form_${cardId}">
+            <div class="ai-mini-cal-panel-head">
+              <div class="ai-mini-cal-panel-date" id="aimc_pdate_${cardId}">—</div>
+              <button type="button" class="ai-mini-cal-close-btn" id="aimc_close_${cardId}"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="ai-mc-field">
+              <label>الاسم الكامل *</label>
+              <input type="text" id="aimc_name_${cardId}" placeholder="e.g. Ahmed Ali" value="${prefillData.name || ''}" />
+            </div>
+            <div class="ai-mc-field">
+              <label>رقم الهاتف / الواتساب *</label>
+              <input type="tel" id="aimc_phone_${cardId}" placeholder="+964 ..." value="${prefillData.phone || ''}" />
+            </div>
+            <div class="ai-mc-field">
+              <label>نوع الخدمة / المشروع</label>
+              <input type="text" id="aimc_service_${cardId}" placeholder="مثال: تطبيق موبايل، متجر، استشارة..." value="${prefillData.service || ''}" />
+            </div>
+            <div class="ai-mc-field">
+              <label>ملاحظات إضافية</label>
+              <textarea id="aimc_notes_${cardId}" placeholder="Any extra details..."></textarea>
+            </div>
+            <input type="hidden" id="aimc_date_${cardId}" value="" />
+            <button type="button" class="ai-submit-booking-btn" id="aimc_submit_${cardId}">
+              <i class="fas fa-paper-plane"></i> Confirm Booking
+            </button>
+          </div>
+        </div>
+      `;
+
+      cardEl.appendChild(wrap);
+
+      // ── Helper functions ─────────────────────────────────────────────────
+      function today0() {
+        const t = new Date();
+        return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+      }
+
+      function maxDate() {
+        const t = new Date();
+        return new Date(t.getFullYear(), t.getMonth() + MAX_AHEAD + 1, 0);
+      }
+
+      function toDateStr(y, m, d) {
+        return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+
+      function renderGrid() {
+        const y = state.cur.getFullYear(), m = state.cur.getMonth();
+        const monthEl  = document.getElementById(`aimc_month_${cardId}`);
+        const daysEl   = document.getElementById(`aimc_days_${cardId}`);
+        const prevBtn  = document.getElementById(`aimc_prev_${cardId}`);
+        const nextBtn  = document.getElementById(`aimc_next_${cardId}`);
+        if (!monthEl || !daysEl) return;
+
+        monthEl.textContent = `${MONTHS[m]} ${y}`;
+
+        const now  = today0();
+        const max  = maxDate();
+        const prev = new Date(y, m - 1, 1);
+        const next = new Date(y, m + 1, 1);
+
+        if (prevBtn) prevBtn.disabled = prev < new Date(now.getFullYear(), now.getMonth(), 1);
+        if (nextBtn) nextBtn.disabled = next > new Date(now.getFullYear(), now.getMonth() + MAX_AHEAD, 1);
+
+        daysEl.innerHTML = '';
+        const firstDow = new Date(y, m, 1).getDay();
+        const total    = new Date(y, m + 1, 0).getDate();
+
+        for (let i = 0; i < firstDow; i++) {
+          const e = document.createElement('div');
+          e.className = 'ai-mini-cal-day ai-mc-empty';
+          daysEl.appendChild(e);
+        }
+
+        for (let d = 1; d <= total; d++) {
+          const dateObj = new Date(y, m, d);
+          const dStr    = toDateStr(y, m, d);
+          const isToday = dateObj.toDateString() === now.toDateString();
+          const isPast  = dateObj < now;
+          const isBeyond= dateObj > max;
+          const isBook  = state.takenDates.has(dStr);
+          const isSel   = state.selectedDay &&
+                          state.selectedDay.d === d &&
+                          state.selectedDay.m === m &&
+                          state.selectedDay.y === y;
+
+          const el = document.createElement('div');
+          el.className  = 'ai-mini-cal-day';
+          el.textContent = d;
+
+          if (isToday)  el.classList.add('ai-mc-today');
+          if (isPast || isBeyond) {
+            el.classList.add('ai-mc-past');
+          } else if (isBook) {
+            el.classList.add('ai-mc-booked');
+            el.title = 'This date is already booked';
+          } else {
+            if (isSel) el.classList.add('ai-mc-selected');
+            el.addEventListener('click', () => selectDay(d, m, y, AR_DAYS[dateObj.getDay()], dStr));
+          }
+
+          daysEl.appendChild(el);
+        }
+      }
+
+      function selectDay(d, m, y, dayName, dStr) {
+        state.selectedDay = { d, m, y };
+
+        const pdateEl   = document.getElementById(`aimc_pdate_${cardId}`);
+        const dateInput = document.getElementById(`aimc_date_${cardId}`);
+        const formEl    = document.getElementById(`aimc_form_${cardId}`);
+        const submitBtn = document.getElementById(`aimc_submit_${cardId}`);
+
+        if (pdateEl)   pdateEl.textContent = `${dayName}، ${MONTHS[m]} ${d}، ${y}`;
+        if (dateInput) dateInput.value = dStr;
+        if (submitBtn) submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> تأكيد الحجز — ${dStr}`;
+
+        if (formEl) {
+          formEl.classList.remove('open'); // restart animation
+          void formEl.offsetWidth;
+          formEl.classList.add('open');
+          setTimeout(() => formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+        }
+
+        renderGrid();
+      }
+
+      // ── Event wiring ─────────────────────────────────────────────────────
+      document.getElementById(`aimc_prev_${cardId}`)?.addEventListener('click', () => {
+        state.cur.setMonth(state.cur.getMonth() - 1); renderGrid();
+      });
+      document.getElementById(`aimc_next_${cardId}`)?.addEventListener('click', () => {
+        state.cur.setMonth(state.cur.getMonth() + 1); renderGrid();
+      });
+      document.getElementById(`aimc_close_${cardId}`)?.addEventListener('click', () => {
+        const formEl = document.getElementById(`aimc_form_${cardId}`);
+        if (formEl) formEl.classList.remove('open');
+        state.selectedDay = null;
+        renderGrid();
+      });
+
+      document.getElementById(`aimc_submit_${cardId}`)?.addEventListener('click', async () => {
+        const name    = document.getElementById(`aimc_name_${cardId}`)?.value?.trim();
+        const phone   = document.getElementById(`aimc_phone_${cardId}`)?.value?.trim();
+        const date    = document.getElementById(`aimc_date_${cardId}`)?.value?.trim();
+        const service = document.getElementById(`aimc_service_${cardId}`)?.value?.trim() || 'استشارة عامة';
+        const notes   = document.getElementById(`aimc_notes_${cardId}`)?.value?.trim() || '';
+        const btn     = document.getElementById(`aimc_submit_${cardId}`);
+
+        if (!name)  { document.getElementById(`aimc_name_${cardId}`).focus(); return; }
+        if (!phone) { document.getElementById(`aimc_phone_${cardId}`).focus(); return; }
+        if (!date)  { alert('يرجى اختيار يوم من التقويم أولاً.'); return; }
+
+        if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Submitting...`; }
+
+        try {
+          const res  = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, date, service, project: service, notes })
+          });
+          const data = await res.json();
+
+          if (res.status === 409) {
+            state.takenDates.add(date);
+            renderGrid();
+            const formEl = document.getElementById(`aimc_form_${cardId}`);
+            if (formEl) formEl.classList.remove('open');
+            state.selectedDay = null;
+            if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane"></i> Confirm Booking`; }
+            alert('هذا التاريخ محجوز للتو. يرجى اختيار يوم آخر.');
+            return;
+          }
+
+          if (!res.ok || !data.success) {
+            alert('❌ ' + (data.error || 'حدث خطأ. يرجى المحاولة لاحقاً.'));
+            if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane"></i> إعادة المحاولة`; }
+            return;
+          }
+
+          // Success — mark date locally & show confirmation
+          state.takenDates.add(date);
+          renderGrid();
+
+          const calEl = document.getElementById(`aimc_cal_${cardId}`);
+          if (calEl) {
+            calEl.innerHTML = `
+              <div class="ai-booking-success-card" style="padding:22px;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:16px;margin:10px 0;">
+                <div style="width:52px;height:52px;border-radius:50%;background:#ffffff;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.4rem;color:#000;box-shadow:0 0 16px rgba(255,255,255,0.4);">✓</div>
+                <div style="font-size:0.98rem;font-weight:700;color:#ffffff;margin-bottom:6px;">تم تأكيد وحجز موعدك بنجاح!</div>
+                <div style="color:#a1a1a6;font-size:0.82rem;margin-bottom:10px;">رقم الحجز: <span style="font-family:monospace;color:#ffffff;font-weight:700;">${data.booking.id}</span></div>
+                <div style="color:#e0e0e0;font-size:0.85rem;line-height:1.8;">
+                  📅 <strong style="color:#ffffff;">${data.booking.date}</strong><br>
+                  👤 <span style="color:#e0e0e0;">${data.booking.name}</span><br>
+                  📞 <span style="direction:ltr;display:inline-block;color:#e0e0e0;">${data.booking.phone}</span>
+                </div>
+                <div style="margin-top:12px;font-size:0.78rem;color:#a1a1a6;">📧 سنتواصل معك عبر الواتساب لتأكيد الاستشارة.</div>
+              </div>`;
+          }
+        } catch (err) {
+          alert('حدث خطأ بالشبكة. يرجى إعادة المحاولة.');
+          if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fas fa-paper-plane"></i> إعادة المحاولة`; }
+        }
+      });
+
+      // ── Load taken dates then render ────────────────────────────────────
+      (async () => {
+        try {
+          const res = await fetch('/api/bookings?dates=true');
+          if (res.ok) state.takenDates = new Set(await res.json());
+        } catch (e) {}
+        renderGrid();
+      })();
+    };
+  } // end constructor
 
   /* ── Audio ── */
   initAudio() {
@@ -90,17 +347,19 @@ class ControlAIAssistant {
       </div>
 
       <div class="ai-quick-replies" id="aiChips">
-        <button class="ai-chip" data-action="projects"><i class="fas fa-grid-2"></i> المشاريع</button>
+        <button class="ai-chip" data-action="booking"><i class="fas fa-calendar-check"></i> حجز موعد</button>
+        <button class="ai-chip" data-action="projects"><i class="fas fa-layer-group"></i> المشاريع</button>
         <button class="ai-chip" data-action="team"><i class="fas fa-users"></i> الفريق</button>
-        <button class="ai-chip" data-action="contact"><i class="fas fa-envelope"></i> تواصل معنا</button>
+        <button class="ai-chip" data-action="contact"><i class="fas fa-envelope"></i> تواصل</button>
       </div>
 
-      <div class="ai-chat-input-area">
-        <div class="ai-input-wrapper">
-          <input type="text" id="aiInput" class="ai-chat-input ai-rtl" placeholder="اكتب رسالتك..." />
-          <button class="ai-voice-input-btn" id="aiMicBtn" title="Voice input"><i class="fas fa-microphone"></i></button>
+      <div class="ai-compose-bar">
+        <div class="ai-compose-inner">
+          <input type="text" id="aiInput" class="ai-compose-input ai-rtl" placeholder="اكتب رسالتك..." autocomplete="off" />
+          <button class="ai-compose-send" id="aiSendBtn" aria-label="Send">
+            <i class="fas fa-arrow-up"></i>
+          </button>
         </div>
-        <button class="ai-send-btn" id="aiSendBtn" aria-label="Send"><i class="fas fa-arrow-up"></i></button>
       </div>
     `;
     document.body.appendChild(win);
@@ -118,7 +377,6 @@ class ControlAIAssistant {
     this.messages     = document.getElementById('aiChatMessages');
     this.input        = document.getElementById('aiInput');
     this.sendBtn      = document.getElementById('aiSendBtn');
-    this.micBtn       = document.getElementById('aiMicBtn');
     this.chips        = document.getElementById('aiChips');
     this.voiceBtn     = document.getElementById('aiVoiceToggle');
     this.closeBtn     = document.getElementById('aiCloseChat');
@@ -148,22 +406,6 @@ class ControlAIAssistant {
         : `<i class="fas fa-volume-mute"></i>`;
       this.notify(this.voiceEnabled ? 'Voice output on' : 'Voice output off');
     });
-
-    // Speech recognition
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      this.rec = new SR();
-      this.rec.lang = 'ar-IQ';
-      this.rec.continuous = false;
-      this.rec.interimResults = false;
-      this.rec.onstart  = () => { this.isListening = true; this.micBtn.classList.add('listening'); this.notify('Listening...'); };
-      this.rec.onresult = e => { this.input.value = e.results[0][0].transcript; this.send(); };
-      this.rec.onerror  = () => { this.isListening = false; this.micBtn.classList.remove('listening'); };
-      this.rec.onend    = () => { this.isListening = false; this.micBtn.classList.remove('listening'); };
-      this.micBtn.addEventListener('click', () => this.isListening ? this.rec.stop() : this.rec.start());
-    } else {
-      this.micBtn.style.display = 'none';
-    }
   }
 
   /* ── Toggle ── */
@@ -286,11 +528,23 @@ class ControlAIAssistant {
   /* ── Chips ── */
   handleChip(action) {
     const labels = {
+      booking: 'حجز موعد مباشرة',
       projects: 'عرض المشاريع',
       quote: 'طلب عرض سعر',
       team: 'فريق التطوير',
       contact: 'التواصل معنا'
     };
+
+    if (action === 'booking') {
+      this.addUser(labels.booking);
+      this.showTyping();
+      setTimeout(() => {
+        this.removeTyping();
+        this.addInteractiveBookingForm();
+      }, 400);
+      return;
+    }
+
     this.addUser(labels[action] || action);
     this.showTyping();
 
@@ -299,6 +553,31 @@ class ControlAIAssistant {
     else if (action === 'quote') setTimeout(() => this.startWizard(), delay);
     else if (action === 'team') setTimeout(() => this.showTeam(), delay);
     else if (action === 'contact') setTimeout(() => this.showContact(), delay);
+  }
+
+  addInteractiveBookingForm(initialData = {}) {
+    const cardId = 'bkg_' + Math.floor(100000 + Math.random() * 900000);
+
+    // Create message bubble directly (bypass typewriter — calendar needs live DOM)
+    this.removeTyping();
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'ai-message bot ai-rtl';
+    msgDiv.textContent = 'أهلاً! اختر يوماً مناسباً من التقويم لتثبيت موعد استشارتك مع فريق CONTROL:';
+    this.messages.appendChild(msgDiv);
+
+    // Container for the calendar card
+    const calContainer = document.createElement('div');
+    this.messages.appendChild(calContainer);
+
+    // Build the full calendar widget into calContainer
+    window._buildAiMiniCal(cardId, calContainer, {
+      name: initialData.name || '',
+      phone: initialData.phone || '',
+      service: initialData.service || ''
+    });
+
+    this.scrollDown();
+    this.beep('receive');
   }
 
   /* ── Main Send ── */
@@ -448,7 +727,7 @@ class ControlAIAssistant {
       { keys: ['مشروع','مشاريع','اعمال','عملتو','شوف','show','project','work','portfolio','اعمالكم'], action: () => this.showProjects() },
       { keys: ['فريق','مطور','يوسف','مصطفى','علي','أزهر','team','developer','مين يشتغل','طاقم'], action: () => this.showTeam() },
       { keys: ['تواصل','اتصال','ايميل','انستغرام','واتساب','contact','email','instagram','رقم','هاتف'], action: () => this.showContact() },
-      { keys: ['حجز','اجتماع','موعد','meeting','book','schedule','consultation','استشارة'], action: () => this.showBookingForm() },
+      { keys: ['حجز','احجز','ثبت','تثبيت','اجتماع','موعد','تاريخ','استمارة','meeting','book','booking','schedule','consultation','استشارة'], action: () => this.showBookingForm() },
       { keys: ['lady','ليدي','متجر ازياء','فخامة'], action: () => this.addBot(`متجر <strong>LADY</strong> هو واحد من أبرز مشاريعنا — متجر أزياء عراقي فاخر مصمم بمعايير العلامات التجارية الراقية.<br><br><a href="https://lady-xi.vercel.app/" target="_blank" class="project-link">معاينة المتجر مباشرة</a>`) },
       { keys: ['delish','دليش','مطعم','restaurant','حجز طاولة'], action: () => this.addBot(`مشروع <strong>DELISH</strong> هو موقع مطعم فاخر يتضمن نظام حجز طاولات تفاعلي متكامل.<br><br><a href="https://cursormh1947.vercel.app/website/" target="_blank" class="project-link">معاينة موقع DELISH</a>`) },
       { keys: ['شركة','control','من انتم','about','عنكم'], action: () => this.addBot(`<strong>CONTROL Systems</strong> هي شركة تقنية عراقية مقرها بغداد، متخصصة في بناء منتجات رقمية فاخرة تشمل:<br><br>• مواقع الويب الاحترافية<br>• تطبيقات الهواتف الذكية<br>• المتاجر الإلكترونية<br>• الأنظمة السحابية للمؤسسات<br><br>فريقنا من أفضل المطورين والمصممين العراقيين.`) },
@@ -475,106 +754,8 @@ class ControlAIAssistant {
   }
 
   /* ── Booking Form ── */
-  showBookingForm() {
-    this.removeTyping();
-    const formId = 'aiBF' + Date.now();
-    const html = `
-      <div id="${formId}" class="ai-booking-form" style="
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 18px;
-        padding: 1.25rem;
-        margin-top: 4px;
-      ">
-        <div style="font-size:0.95rem;font-weight:600;color:#f5f5f7;margin-bottom:1rem;">
-          📅 تفاصيل الاستشارة
-        </div>
-
-        <div class="ai-form-field">
-          <label>الاسم الكامل</label>
-          <input type="text" id="${formId}_name" placeholder="مثال: أحمد محمد" />
-        </div>
-        <div class="ai-form-field">
-          <label>اسم المشروع</label>
-          <input type="text" id="${formId}_project" placeholder="مثال: متجر إلكتروني للملابس" />
-        </div>
-        <div class="ai-form-field">
-          <label>رقم التواصل (واتساب أو هاتف)</label>
-          <input type="tel" id="${formId}_phone" placeholder="+964 ..." dir="ltr" />
-        </div>
-        <div class="ai-form-field">
-          <label>الميزانية المتوقعة للمشروع</label>
-          <input type="text" id="${formId}_budget" placeholder="مثال: $800 أو حوالي $2,000" />
-        </div>
-        <div class="ai-form-field">
-          <label>ملاحظات إضافية</label>
-          <textarea id="${formId}_notes" placeholder="أي تفاصيل إضافية عن فكرتك أو متطلبات خاصة..." rows="3"></textarea>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:1rem;">
-          <button class="ai-book-submit-btn" onclick="window._aiSubmitBooking('${formId}')">
-            إرسال الطلب
-          </button>
-          <button class="ai-book-calendar-btn" onclick="window.open('booking.html','_blank')">
-            📆 اختر موعداً
-          </button>
-        </div>
-      </div>
-    `;
-
-    // Define submit handler globally
-    window._aiSubmitBooking = async (id) => {
-      const name = document.getElementById(id + '_name')?.value?.trim();
-      const project = document.getElementById(id + '_project')?.value?.trim();
-      const phone = document.getElementById(id + '_phone')?.value?.trim();
-      const budget = document.getElementById(id + '_budget')?.value;
-      const notes = document.getElementById(id + '_notes')?.value?.trim();
-
-      if (!name || !phone) {
-        this.addBot('يرجى تعبئة حقل الاسم ورقم التواصل على الأقل.');
-        return;
-      }
-
-      const form = document.getElementById(id);
-      const submitBtn = form?.querySelector('.ai-book-submit-btn');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'جاري الإرسال...';
-      }
-
-      try {
-        const response = await fetch('/api/bookings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, project, budget, service: 'Website / Landing Page', notes })
-        });
-
-        if (!response.ok) throw new Error('Submission failed');
-
-        if (form) form.innerHTML = `
-          <div style="text-align:center;padding:1rem 0;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
-            <div style="font-weight:600;color:#f5f5f7;margin-bottom:0.25rem;">تم استلام طلبك!</div>
-            <div style="font-size:0.82rem;color:#86868b;">سنتواصل معك عبر الواتساب أو الإيميل خلال ساعتين.</div>
-          </div>
-        `;
-
-        setTimeout(() => this.addBot(
-          `شكراً <strong>${name}</strong>! تم استلام طلبك بنجاح.<br><br>` +
-          `سيتواصل معك فريق CONTROL قريباً على الرقم <strong>${phone}</strong>.<br>` +
-          `يمكنك أيضاً <a href="booking.html" target="_blank" class="project-link">اختيار موعد مباشرة من التقويم</a>.`
-        ), 400);
-
-      } catch (err) {
-        alert('فشل في إرسال الطلب. يرجى المحاولة مرة أخرى.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'إرسال الطلب';
-        }
-      }
-    };
-
-    this.addBot(html);
+  showBookingForm(initialData = {}) {
+    this.addInteractiveBookingForm(initialData);
   }
 
   /* ── Preset Responses ── */

@@ -143,6 +143,101 @@ async function sendNotificationEmail(booking) {
   }
 }
 
+/**
+ * Helper to normalize date strings (Arabic/English numerals) to YYYY-MM-DD
+ */
+function normalizeDateStr(dateStr) {
+  if (!dateStr) return new Date().toISOString().split('T')[0];
+  let str = String(dateStr).trim();
+  str = str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  str = str.replace(/\s+/g, '');
+  
+  const parts = str.match(/(\d{1,4})[/\-.](\d{1,2})[/\-.](\d{1,4})/);
+  if (parts) {
+    let year, month, day;
+    if (parts[1].length === 4) {
+      year = parts[1];
+      month = parts[2].padStart(2, '0');
+      day = parts[3].padStart(2, '0');
+    } else {
+      day = parts[1].padStart(2, '0');
+      month = parts[2].padStart(2, '0');
+      year = parts[3].length === 2 ? '20' + parts[3] : parts[3];
+    }
+    return `${year}-${month}-${day}`;
+  }
+  return str;
+}
+
+/**
+ * Creates a booking record in Supabase / Local JSON and sends email notification via Resend.
+ */
+async function createBooking(data) {
+  const { name, phone, email, project, budget, service, notes, date } = data;
+  if (!name || !phone) {
+    return { ok: false, error: 'Name and phone are required.' };
+  }
+
+  const requestedDate = normalizeDateStr(date || new Date().toISOString().split('T')[0]);
+
+  // Enforce one booking per day
+  const takenDates = await getBookedDates();
+  if (takenDates.has(requestedDate)) {
+    return {
+      ok: false,
+      conflict: true,
+      error: `The requested date (${requestedDate}) is already booked.`,
+    };
+  }
+
+  const booking = {
+    id: 'BKG-' + Math.floor(100000 + Math.random() * 900000),
+    name,
+    phone,
+    email: email || '',
+    project: project || '',
+    budget: budget || '',
+    service: service || 'استشارة عامة',
+    notes: notes || '',
+    date: requestedDate,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  };
+
+  try {
+    const saved = await sbInsert('bookings', booking);
+    await sendNotificationEmail(booking);
+    return { ok: true, booking: saved || booking };
+  } catch (err) {
+    console.warn('[bookings] Supabase insert failed, trying fallback options:', err.message);
+
+    // If missing email column, retry without it
+    if (err.message.includes('email') || err.message.includes('PGRST204')) {
+      try {
+        const { email: _, ...bookingWithoutEmail } = booking;
+        const saved = await sbInsert('bookings', bookingWithoutEmail);
+
+        const all = localRead();
+        all.push(booking);
+        localWrite(all);
+
+        await sendNotificationEmail(booking);
+
+        return { ok: true, booking: { ...saved, email: booking.email } };
+      } catch (err2) {
+        console.warn('[bookings] Retry without email also failed:', err2.message);
+      }
+    }
+
+    // Full local fallback
+    const all = localRead();
+    all.push(booking);
+    localWrite(all);
+    await sendNotificationEmail(booking);
+    return { ok: true, booking };
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCORSHeaders(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
 
@@ -156,68 +251,14 @@ module.exports = async function handler(req, res) {
 
   // ── POST — Create booking (public) ──────────────────────────────────────────
   if (req.method === 'POST') {
-    const { name, phone, email, project, budget, service, notes, date } = req.body;
-    if (!name || !phone) {
-      return res.status(400).json({ error: 'Name and phone are required.' });
-    }
-
-    const requestedDate = date || new Date().toISOString().split('T')[0];
-
-    // ── Enforce one booking per day ──────────────────────────────────────────
-    const takenDates = await getBookedDates();
-    if (takenDates.has(requestedDate)) {
-      return res.status(409).json({
-        error: 'This date is already booked. Please choose a different day.',
-      });
-    }
-
-    const booking = {
-      id: 'BKG-' + Math.floor(100000 + Math.random() * 900000),
-      name,
-      phone,
-      email: email || '',
-      project: project || '',
-      budget: budget || '',
-      service: service || 'Other',
-      notes: notes || '',
-      date: requestedDate,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-    };
-
-    try {
-      const saved = await sbInsert('bookings', booking);
-      await sendNotificationEmail(booking);
-      return res.status(200).json({ success: true, booking: saved || booking });
-    } catch (err) {
-      console.warn('[bookings] Supabase insert failed, trying fallback options:', err.message);
-
-      // If missing email column, retry without it
-      if (err.message.includes('email') || err.message.includes('PGRST204')) {
-        try {
-          const { email: _, ...bookingWithoutEmail } = booking;
-          const saved = await sbInsert('bookings', bookingWithoutEmail);
-
-          // Save full booking locally so the email isn't lost
-          const all = localRead();
-          all.push(booking);
-          localWrite(all);
-
-          await sendNotificationEmail(booking);
-
-          return res.status(200).json({ success: true, booking: { ...saved, email: booking.email } });
-        } catch (err2) {
-          console.warn('[bookings] Retry without email also failed:', err2.message);
-        }
+    const result = await createBooking(req.body);
+    if (!result.ok) {
+      if (result.conflict) {
+        return res.status(409).json({ error: result.error });
       }
-
-      // Full local fallback
-      const all = localRead();
-      all.push(booking);
-      localWrite(all);
-      await sendNotificationEmail(booking);
-      return res.status(200).json({ success: true, booking });
+      return res.status(400).json({ error: result.error });
     }
+    return res.status(200).json({ success: true, booking: result.booking });
   }
 
   // ── GET — Fetch all bookings (admin only) ────────────────────────────────────
@@ -337,3 +378,8 @@ module.exports = async function handler(req, res) {
 
   return res.status(405).json({ error: 'Method not allowed' });
 };
+
+module.exports.createBooking = createBooking;
+module.exports.getBookedDates = getBookedDates;
+module.exports.normalizeDateStr = normalizeDateStr;
+

@@ -359,133 +359,113 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 0.75rem 1.25rem;
+  padding: 8px 14px 6px;
   border-top: 1px solid var(--ai-border);
-  background: rgba(28, 28, 30, 0.4);
+  background: rgba(20, 20, 22, 0.5);
   flex-shrink: 0;
 }
 
 .ai-chip {
-  background: var(--ai-surface-2);
-  border: 1px solid var(--ai-border);
-  color: var(--ai-text-dim);
-  padding: 6px 14px;
-  border-radius: 20px; /* Apple-style pill shape */
-  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #999;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.74rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: inherit;
+  letter-spacing: 0.01em;
 }
 
 .ai-chip i {
-  font-size: 0.75rem;
-  color: var(--ai-accent);
+  font-size: 0.7rem;
+  color: #666;
+  transition: color 0.18s ease;
 }
 
 .ai-chip:hover {
-  border-color: var(--ai-border-hover);
-  color: var(--ai-text);
-  background: var(--ai-surface-3);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0;
   transform: translateY(-1px);
 }
 
-/* ── Input Area ── */
-.ai-chat-input-area {
-  padding: 0.85rem 1.25rem;
-  border-top: 1px solid var(--ai-border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(28, 28, 30, 0.6);
+.ai-chip:hover i { color: #aaa; }
+
+/* ── Premium Compose Bar (Luxury Dark Aesthetic) ── */
+.ai-compose-bar {
+  padding: 10px 14px 14px;
+  background: rgba(14, 14, 16, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
-.ai-input-wrapper {
-  flex: 1;
-  position: relative;
+.ai-compose-inner {
   display: flex;
   align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(28, 28, 34, 0.85) 0%, rgba(18, 18, 22, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 26px;
+  padding: 5px 6px 5px 16px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.ai-chat-input {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--ai-border);
-  border-radius: 20px; /* Apple search-bar style pill */
-  padding: 10px 42px 10px 16px;
-  color: var(--ai-text);
-  font-size: 0.875rem;
+.ai-compose-inner:focus-within {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15), 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(32, 32, 40, 0.95) 0%, rgba(22, 22, 28, 0.98) 100%);
+}
+
+.ai-compose-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f5f5f7;
+  font-size: 0.92rem;
   font-family: inherit;
   outline: none;
-  transition: all 0.2s ease;
-  direction: rtl;
+  padding: 6px 8px;
 }
 
-.ai-chat-input::placeholder {
-  color: var(--ai-text-muted);
-  font-size: 0.825rem;
+.ai-compose-input::placeholder {
+  color: #6e6e73;
 }
 
-.ai-chat-input:focus {
-  border-color: rgba(255,255,255,0.3);
-  background: rgba(255, 255, 255, 0.07);
-}
-
-.ai-voice-input-btn {
-  position: absolute;
-  left: 10px;
-  background: none;
+.ai-compose-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
   border: none;
-  color: var(--ai-text-muted);
-  cursor: pointer;
-  font-size: 0.85rem;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease, background 0.2s ease;
-}
-
-.ai-voice-input-btn:hover {
-  color: var(--ai-accent);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.ai-voice-input-btn.listening {
-  color: #ef4444;
-  animation: ai-mic-pulse 1s ease infinite;
-}
-
-@keyframes ai-mic-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.ai-send-btn {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: #f0f0f0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  color: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.88rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.3);
 }
 
-.ai-send-btn:hover {
-  background: rgba(255,255,255,0.22);
+.ai-compose-send:hover {
+  background: linear-gradient(135deg, #34c759 0%, #28c04c 100%);
   transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(48, 209, 88, 0.5);
+}
+
+.ai-compose-send:active {
+  transform: scale(0.94);
 }
 
 /* ── Project Cards ── */
@@ -882,6 +862,384 @@
   opacity: 0 !important;
   pointer-events: none !important;
   transform: scale(0.7) translateY(15px) !important;
+}
+
+/* ── AI Booking Success Card ── */
+.ai-booking-success-card {
+  background: rgba(48, 209, 88, 0.08);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  direction: rtl;
+  text-align: right;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Interactive AI Booking Form Card ── */
+.ai-interactive-booking-card {
+  background: rgba(22, 22, 26, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  margin-top: 10px;
+  direction: rtl;
+  text-align: right;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-family: inherit;
+}
+
+.ai-card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.ai-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f5f5f7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-card-subtitle {
+  font-size: 0.76rem;
+  color: #86868b;
+  margin-top: 3px;
+}
+
+.ai-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.ai-input-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a1a1a6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-input-group label i {
+  font-size: 0.72rem;
+  color: #30d158;
+}
+
+.ai-card-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+  direction: rtl;
+  box-sizing: border-box;
+}
+
+.ai-card-input:focus {
+  border-color: rgba(48, 209, 88, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.15);
+}
+
+.ai-card-input::placeholder {
+  color: #55555e;
+  font-size: 0.8rem;
+}
+
+.ai-card-input[type="date"] {
+  direction: ltr;
+  text-align: right;
+  color-scheme: dark;
+}
+
+/* ── AI Mini Calendar — dark replica of booking.html ── */
+.ai-mini-cal {
+  background: rgba(18, 18, 22, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.ai-mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ai-mini-cal-month {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.ai-mini-cal-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.ai-mini-cal-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.ai-mini-cal-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.15); }
+.ai-mini-cal-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.ai-mini-cal-body { padding: 10px 12px 14px; }
+
+.ai-mini-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.ai-mini-cal-wd {
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 0;
+}
+
+.ai-mini-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.ai-mini-cal-day {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #e0e0e5;
+  cursor: pointer;
+  transition: background 0.14s;
+  position: relative;
+  min-height: 32px;
+  user-select: none;
+}
+
+.ai-mini-cal-day:hover:not(.ai-mc-empty):not(.ai-mc-past):not(.ai-mc-booked):not(.ai-mc-selected) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ai-mini-cal-day.ai-mc-empty { cursor: default; }
+
+.ai-mini-cal-day.ai-mc-past {
+  color: #3a3a3e;
+  cursor: not-allowed;
+}
+
+.ai-mini-cal-day.ai-mc-today {
+  color: #f5f5f7;
+  font-weight: 700;
+}
+
+.ai-mini-cal-day.ai-mc-today::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #f5f5f7;
+}
+
+.ai-mini-cal-day.ai-mc-booked {
+  color: #4a4a52;
+  cursor: not-allowed;
+}
+
+.ai-mini-cal-day.ai-mc-booked::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+}
+
+.ai-mini-cal-day.ai-mc-booked::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.5);
+}
+
+.ai-mini-cal-day.ai-mc-selected {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.5) !important;
+}
+
+.ai-mini-cal-day.ai-mc-selected::after { display: none !important; }
+
+/* Form that slides in below calendar after picking a day */
+.ai-mini-cal-form {
+  display: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0 16px 16px;
+  animation: aiCalFormIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ai-mini-cal-form.open { display: block; }
+
+@keyframes aiCalFormIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-mini-cal-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 10px;
+}
+
+.ai-mini-cal-panel-date {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f5f5f7;
+}
+
+.ai-mini-cal-close-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #86868b;
+  font-size: 0.72rem;
+  transition: background 0.15s;
+}
+
+.ai-mini-cal-close-btn:hover { background: rgba(255, 255, 255, 0.14); }
+
+.ai-mc-field {
+  margin-bottom: 10px;
+}
+
+.ai-mc-field label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.ai-mc-field input,
+.ai-mc-field textarea {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(28, 28, 34, 0.8) 0%, rgba(18, 18, 22, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 13px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  color: #f5f5f7;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  direction: rtl;
+  color-scheme: dark;
+}
+
+.ai-mc-field input:focus,
+.ai-mc-field textarea:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(34, 34, 42, 0.95) 0%, rgba(22, 22, 28, 0.98) 100%);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.ai-mc-field input::placeholder,
+.ai-mc-field textarea::placeholder { color: #6e6e73; font-size: 0.8rem; }
+
+.ai-mc-field textarea { resize: none; min-height: 64px; }
+
+.ai-mc-field input[type="tel"] { direction: ltr; text-align: right; }
+
+/* ── High Visibility Pure White Submit Button ── */
+.ai-submit-booking-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.25);
+}
+
+.ai-submit-booking-btn:hover:not(:disabled) {
+  background: #f0f0f5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(255, 255, 255, 0.4);
+}
+
+.ai-submit-booking-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ── Inline Booking Form ── */
